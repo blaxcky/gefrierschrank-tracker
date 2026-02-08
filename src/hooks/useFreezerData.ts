@@ -122,6 +122,10 @@ export async function deleteItem(id: string) {
   await db.items.delete(id)
 }
 
+export async function updateItem(id: string, updates: Partial<Item>) {
+  await db.items.update(id, updates)
+}
+
 export async function addTag(name: string, color: string): Promise<Tag> {
   const tag: Tag = {
     id: crypto.randomUUID(),

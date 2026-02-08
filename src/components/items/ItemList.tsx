@@ -9,9 +9,10 @@ import { isExpired } from '../../utils/dates'
 interface ItemListProps {
   items: Item[]
   tags: Tag[]
+  onEdit: (item: Item) => void
 }
 
-export default function ItemList({ items, tags }: ItemListProps) {
+export default function ItemList({ items, tags, onEdit }: ItemListProps) {
   const [deleteTarget, setDeleteTarget] = useState<Item | null>(null)
 
   if (items.length === 0) {
@@ -47,6 +48,7 @@ export default function ItemList({ items, tags }: ItemListProps) {
             item={item}
             tags={tags}
             onDelete={() => setDeleteTarget(item)}
+            onEdit={onEdit}
           />
         ))}
       </div>

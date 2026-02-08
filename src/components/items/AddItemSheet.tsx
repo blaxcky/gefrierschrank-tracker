@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Sheet, List, ListInput } from 'konsta/react'
-import { addItem } from '../../hooks/useFreezerData'
+import { addItem, updateItem } from '../../hooks/useFreezerData'
+import type { Item } from '../../db/database'
 import TagPicker from './TagPicker'
 
 interface AddItemSheetProps {
   opened: boolean
   onClose: () => void
   drawerId: string
+  editItem?: Item | null
+  onSave?: () => void
 }
 
 const UNITS = ['Stück', 'g', 'kg', 'Packung', 'Beutel', 'Dose']
 
-export default function AddItemSheet({ opened, onClose, drawerId }: AddItemSheetProps) {
+export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSave }: AddItemSheetProps) {
   const [name, setName] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [unit, setUnit] = useState('Stück')
@@ -21,21 +24,42 @@ export default function AddItemSheet({ opened, onClose, drawerId }: AddItemSheet
 
   useEffect(() => {
     if (opened) {
-      setName('')
-      setQuantity('1')
-      setUnit('Stück')
-      setTags([])
-      setNotes('')
-      setExpiryDate('')
+      if (editItem) {
+        setName(editItem.name)
+        setQuantity(String(editItem.quantity))
+        setUnit(editItem.unit)
+        setTags(editItem.tags)
+        setNotes(editItem.notes)
+        setExpiryDate(editItem.expiryDate ? editItem.expiryDate.toISOString().split('T')[0] : '')
+      } else {
+        setName('')
+        setQuantity('1')
+        setUnit('Stück')
+        setTags([])
+        setNotes('')
+        setExpiryDate('')
+      }
     }
-  }, [opened])
+  }, [opened, editItem])
 
   const handleSave = async () => {
     if (!name.trim()) return
     const qty = Math.max(1, parseInt(quantity) || 1)
     const expiry = expiryDate ? new Date(expiryDate + 'T00:00:00') : undefined
 
-    await addItem(drawerId, name.trim(), qty, unit, tags, notes.trim(), expiry)
+    if (editItem) {
+      await updateItem(editItem.id, {
+        name: name.trim(),
+        quantity: qty,
+        unit,
+        tags,
+        notes: notes.trim(),
+        expiryDate: expiry,
+      })
+      onSave?.()
+    } else {
+      await addItem(drawerId, name.trim(), qty, unit, tags, notes.trim(), expiry)
+    }
     onClose()
   }
 
@@ -47,7 +71,7 @@ export default function AddItemSheet({ opened, onClose, drawerId }: AddItemSheet
           <button onClick={onClose} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
             Abbrechen
           </button>
-          <span style={{ fontWeight: 600, fontSize: 17 }}>Neuer Artikel</span>
+          <span style={{ fontWeight: 600, fontSize: 17 }}>{editItem ? 'Artikel bearbeiten' : 'Neuer Artikel'}</span>
           <button onClick={handleSave} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
             Speichern
           </button>

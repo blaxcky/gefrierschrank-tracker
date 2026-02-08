@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Page, Navbar, NavbarBackLink, Fab } from 'konsta/react'
 import { useDrawer, useItems, useTags } from '../hooks/useFreezerData'
+import type { Item } from '../db/database'
 import ItemList from '../components/items/ItemList'
 import AddItemSheet from '../components/items/AddItemSheet'
 
@@ -12,6 +13,17 @@ export default function DrawerViewPage() {
   const items = useItems(drawerId)
   const tags = useTags()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [editItem, setEditItem] = useState<Item | null>(null)
+
+  const handleEdit = (item: Item) => {
+    setEditItem(item)
+    setSheetOpen(true)
+  }
+
+  const handleCloseSheet = () => {
+    setSheetOpen(false)
+    setEditItem(null)
+  }
 
   return (
     <Page>
@@ -21,7 +33,7 @@ export default function DrawerViewPage() {
       />
 
       <div style={{ paddingBottom: 80 }}>
-        <ItemList items={items ?? []} tags={tags ?? []} />
+        <ItemList items={items ?? []} tags={tags ?? []} onEdit={handleEdit} />
       </div>
 
       <Fab
@@ -38,8 +50,9 @@ export default function DrawerViewPage() {
       {drawerId && (
         <AddItemSheet
           opened={sheetOpen}
-          onClose={() => setSheetOpen(false)}
+          onClose={handleCloseSheet}
           drawerId={drawerId}
+          editItem={editItem}
         />
       )}
     </Page>

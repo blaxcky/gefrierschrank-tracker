@@ -8,12 +8,14 @@ interface ItemRowProps {
   item: Item
   tags: Tag[]
   onDelete: (id: string) => void
+  onEdit: (item: Item) => void
 }
 
-export default memo(function ItemRow({ item, tags, onDelete }: ItemRowProps) {
+export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowProps) {
   const [offsetX, setOffsetX] = useState(0)
   const [swiping, setSwiping] = useState(false)
   const startX = useRef(0)
+  const startOffset = useRef(0)
 
   const expired = useMemo(
     () => item.expiryDate ? isExpired(item.expiryDate) : false,
@@ -27,21 +29,22 @@ export default memo(function ItemRow({ item, tags, onDelete }: ItemRowProps) {
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX
+    startOffset.current = offsetX
     setSwiping(true)
-  }, [])
+  }, [offsetX])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!swiping) return
-    const diff = e.touches[0].clientX - startX.current
-    if (diff < 0) {
-      setOffsetX(Math.max(diff, -100))
-    }
+    const diff = e.touches[0].clientX - startX.current + startOffset.current
+    setOffsetX(Math.max(-100, Math.min(100, diff)))
   }, [swiping])
 
   const handleTouchEnd = useCallback(() => {
     setSwiping(false)
     if (offsetX < -60) {
       setOffsetX(-100)
+    } else if (offsetX > 60) {
+      setOffsetX(100)
     } else {
       setOffsetX(0)
     }
@@ -49,7 +52,29 @@ export default memo(function ItemRow({ item, tags, onDelete }: ItemRowProps) {
 
   return (
     <div style={{ position: 'relative', overflow: 'hidden' }}>
-      {/* Delete button behind */}
+      {/* Edit button behind (left side) */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 100,
+          background: '#007AFF',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: 14,
+          cursor: 'pointer',
+        }}
+        onClick={() => onEdit(item)}
+      >
+        Bearbeiten
+      </div>
+
+      {/* Delete button behind (right side) */}
       <div
         style={{
           position: 'absolute',
