@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:\\\\Users\\\\Admin\\\\Documents\\\\Github\\\\gefrierschrank-tracker\" log --oneline --all)",
+      "WebSearch",
+      "WebFetch(domain:vite.dev)",
+      "WebFetch(domain:vite-pwa-org.netlify.app)",
+      "WebFetch(domain:konstaui.com)",
+      "Bash(npm create:*)",
+      "Bash(xcopy:*)",
+      "Bash(npm install:*)",
+      "Bash(node -e:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)"
+    ]
+  }
+}
