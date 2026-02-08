@@ -42,13 +42,15 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
   const handleTouchEnd = useCallback(() => {
     setSwiping(false)
     if (offsetX < -60) {
-      setOffsetX(-100)
+      setOffsetX(0)
+      onDelete(item.id)
     } else if (offsetX > 60) {
-      setOffsetX(100)
+      setOffsetX(0)
+      onEdit(item)
     } else {
       setOffsetX(0)
     }
-  }, [offsetX])
+  }, [offsetX, item, onDelete, onEdit])
 
   return (
     <div style={{ position: 'relative', overflow: 'hidden' }}>
