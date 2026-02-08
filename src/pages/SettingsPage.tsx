@@ -24,6 +24,7 @@ export default function SettingsPage() {
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('#007AFF')
   const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleSaveName = async () => {
@@ -63,6 +64,23 @@ export default function SettingsPage() {
     // Re-seed
     const { initializeDatabase } = await import('../db/seed')
     await initializeDatabase()
+  }
+
+  const handleCacheReset = async () => {
+    // 1. Alle Caches löschen
+    if ('caches' in window) {
+      const cacheNames = await caches.keys()
+      await Promise.all(cacheNames.map(name => caches.delete(name)))
+    }
+
+    // 2. Service Worker deregistrieren
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(registrations.map(reg => reg.unregister()))
+    }
+
+    // 3. Seite komplett neu laden
+    window.location.replace('/')
   }
 
   const handleAddTag = async () => {
@@ -203,6 +221,12 @@ export default function SettingsPage() {
           title={<span style={{ color: '#FF3B30' }}>Alle Daten löschen</span>}
           onClick={() => setShowClearConfirm(true)}
         />
+        <ListItem
+          link
+          title="App aktualisieren"
+          subtitle="Cache & Service Worker zurücksetzen"
+          onClick={() => setShowResetConfirm(true)}
+        />
       </List>
 
       <input
@@ -216,6 +240,21 @@ export default function SettingsPage() {
       <div style={{ textAlign: 'center', padding: '24px', color: '#AEAEB2', fontSize: 13 }}>
         Gefrierschrank Tracker v1.0
       </div>
+
+      <Dialog
+        opened={showResetConfirm}
+        onBackdropClick={() => setShowResetConfirm(false)}
+        title="App aktualisieren?"
+        content="Der Service Worker und alle Caches werden gelöscht. Deine Daten bleiben erhalten. Die App wird danach neu geladen."
+        buttons={
+          <>
+            <DialogButton onClick={() => setShowResetConfirm(false)}>Abbrechen</DialogButton>
+            <DialogButton strong onClick={handleCacheReset}>
+              Aktualisieren
+            </DialogButton>
+          </>
+        }
+      />
 
       <Dialog
         opened={showClearConfirm}
