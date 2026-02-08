@@ -83,7 +83,7 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
               {itemCount ?? 0}
             </span>
             <svg className="drawer-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">
-              <path d="M1 1L6 6L1 11" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M1 1L6 6L1 11" stroke="#C7C7CC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         </div>

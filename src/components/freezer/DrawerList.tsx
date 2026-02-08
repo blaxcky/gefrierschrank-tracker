@@ -15,12 +15,12 @@ export default function DrawerList({ drawers, onLongPressDrawer }: DrawerListPro
         alignItems: 'center',
         justifyContent: 'center',
         padding: '40px 24px',
-        color: 'rgba(255, 255, 255, 0.35)',
+        color: '#AEAEB2',
         textAlign: 'center',
       }}>
         <div style={{ fontSize: 40, marginBottom: 8, opacity: 0.5 }}>&#10052;</div>
-        <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 4px' }}>Keine Fächer</p>
-        <p style={{ fontSize: 13, margin: 0, color: 'rgba(255,255,255,0.25)' }}>
+        <p style={{ fontSize: 15, fontWeight: 500, margin: '0 0 4px', color: '#8E8E93' }}>Keine Fächer</p>
+        <p style={{ fontSize: 13, margin: 0 }}>
           Tippe auf + um ein Fach hinzuzufügen
         </p>
       </div>

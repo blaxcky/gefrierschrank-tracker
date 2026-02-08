@@ -24,23 +24,25 @@ html, body, #root {
   }
 }
 
-/* === FREEZER CABINET === */
+/* === FREEZER CABINET (light design) === */
 .freezer-cabinet {
   padding: 16px;
 }
 
+/* Outer shell — light silver/steel frame */
 .freezer-outer {
-  background: linear-gradient(180deg, #B8BCC2 0%, #A0A4AA 50%, #8E9298 100%);
+  background: linear-gradient(180deg, #E5E7EB 0%, #D1D5DB 50%, #C9CDD3 100%);
   border-radius: 20px;
   padding: 3px;
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.25),
-    0 2px 8px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    0 6px 24px rgba(0, 0, 0, 0.10),
+    0 2px 6px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
+/* Inner wall — frosty white/light blue */
 .freezer-inner {
-  background: linear-gradient(180deg, #2C3E50 0%, #1a2533 100%);
+  background: linear-gradient(180deg, #EFF3F8 0%, #E4EAF1 100%);
   border-radius: 18px;
   padding: 10px;
   position: relative;
@@ -53,8 +55,8 @@ html, body, #root {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.04) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03) 0%, transparent 50%);
+    radial-gradient(circle at 25% 20%, rgba(255,255,255,0.6) 0%, transparent 50%),
+    radial-gradient(circle at 75% 80%, rgba(200,220,240,0.15) 0%, transparent 50%);
   pointer-events: none;
   border-radius: 18px;
 }
@@ -66,14 +68,14 @@ html, body, #root {
   justify-content: center;
   gap: 6px;
   padding: 6px 0 8px;
-  color: rgba(255, 255, 255, 0.35);
+  color: #AEAEB2;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 3px;
   text-transform: uppercase;
 }
 
-/* === DRAWER SLOT (realistic plastic drawer) === */
+/* === DRAWER SLOT (realistic light plastic drawer) === */
 .drawer-slot {
   position: relative;
   cursor: pointer;
@@ -84,49 +86,50 @@ html, body, #root {
   margin-bottom: 0;
 }
 
-/* The rail/frame the drawer sits in */
+/* The rail/groove the drawer sits in */
 .drawer-rail {
-  background: linear-gradient(180deg, #1e2d3d 0%, #243447 100%);
-  border-radius: 8px;
+  background: linear-gradient(180deg, #D6DCE4 0%, #CDD3DB 100%);
+  border-radius: 10px;
   padding: 4px 4px 5px;
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.4),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.5);
 }
 
-/* The drawer body - translucent plastic look */
+/* The drawer body — frosted white translucent plastic */
 .drawer-body {
   background: linear-gradient(
     180deg,
-    rgba(200, 220, 240, 0.25) 0%,
-    rgba(180, 200, 220, 0.18) 40%,
-    rgba(160, 185, 210, 0.12) 100%
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(245, 248, 255, 0.90) 50%,
+    rgba(240, 244, 250, 0.88) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-bottom-color: rgba(200, 210, 220, 0.4);
+  border-radius: 8px;
   padding: 10px 12px;
   min-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
   overflow: hidden;
   transition: background 0.15s ease;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .drawer-body:active {
   background: linear-gradient(
     180deg,
-    rgba(200, 220, 240, 0.35) 0%,
-    rgba(180, 200, 220, 0.28) 40%,
-    rgba(160, 185, 210, 0.20) 100%
+    rgba(235, 240, 248, 0.95) 0%,
+    rgba(228, 234, 245, 0.92) 50%,
+    rgba(220, 228, 240, 0.90) 100%
   );
 }
 
-/* Frost/ice shimmer on the drawer */
+/* Light frost shimmer on the drawer top edge */
 .drawer-body::before {
   content: '';
   position: absolute;
@@ -134,25 +137,25 @@ html, body, #root {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 30%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.25) 70%, transparent 100%);
+  background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.9) 30%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.9) 70%, transparent 90%);
 }
 
-/* Handle bar at the top of the drawer */
+/* Handle bar — sits at the top center of the drawer front */
 .drawer-handle-bar {
   position: absolute;
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 60px;
+  width: 56px;
   height: 4px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 100%);
+  background: linear-gradient(180deg, #C7CDD5 0%, #B8BFC8 100%);
   border-radius: 0 0 3px 3px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
 }
 
 /* Drawer label text */
 .drawer-label {
-  color: rgba(255, 255, 255, 0.85);
+  color: #1C1C1E;
   font-size: 15px;
   font-weight: 500;
   display: flex;
@@ -166,18 +169,16 @@ html, body, #root {
   height: 24px;
   border-radius: 2px;
   flex-shrink: 0;
-  opacity: 0.8;
 }
 
 /* Item count badge */
 .item-count-badge {
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.7);
+  background: #F2F2F7;
+  color: #8E8E93;
   border-radius: 12px;
   padding: 2px 10px;
   font-size: 13px;
   font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Chevron arrow */
@@ -196,12 +197,12 @@ html, body, #root {
   top: 10px;
   right: 10px;
   z-index: 2;
-  box-shadow: 0 0 6px rgba(255, 59, 48, 0.6);
+  box-shadow: 0 0 6px rgba(255, 59, 48, 0.5);
 }
 
 /* Items preview text inside drawer */
 .drawer-preview {
-  color: rgba(255, 255, 255, 0.4);
+  color: #AEAEB2;
   font-size: 11px;
   margin-top: 2px;
   white-space: nowrap;
