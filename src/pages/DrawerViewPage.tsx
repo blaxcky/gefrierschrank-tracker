@@ -57,29 +57,31 @@ export default function DrawerViewPage() {
             </svg>
             Zurück
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              backgroundColor: drawer?.color ?? '#007AFF',
-              flexShrink: 0,
-            }} />
-            <h1 style={{
-              margin: 0,
-              fontSize: 28,
-              fontWeight: 700,
-              letterSpacing: -0.5,
-              color: '#1C1C1E',
-              fontFamily: "'Nunito', sans-serif",
-            }}>
-              {drawer?.name ?? 'Fach'}
-            </h1>
-            {items && items.length > 0 && (
-              <span className="item-count-badge">
-                {items.length}
-              </span>
-            )}
+          {/* Drawer-Card Style Title */}
+          <div className="drawer-slot" style={{ cursor: 'default', marginBottom: 0 }}>
+            <div className="drawer-rail">
+              <div className="drawer-body" style={{ minHeight: 48 }}>
+                <div className="drawer-handle-bar" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+                  <div className="drawer-color-strip" style={{ backgroundColor: drawer?.color, height: 28 }} />
+                  <h1 style={{
+                    margin: 0,
+                    fontSize: 20,
+                    fontWeight: 600,
+                    letterSpacing: -0.3,
+                    color: '#1C1C1E',
+                    fontFamily: "'Nunito', sans-serif",
+                  }}>
+                    {drawer?.name ?? 'Fach'}
+                  </h1>
+                </div>
+                {items && items.length > 0 && (
+                  <span className="item-count-badge">
+                    {items.length}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
