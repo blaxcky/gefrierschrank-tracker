@@ -247,3 +247,8 @@ html, body, #root {
 }
 
 /* (warning-dot moved to drawer section above) */
+
+/* Settings navbar opaque background */
+.settings-navbar {
+  background: #F2F2F7 !important;
+}

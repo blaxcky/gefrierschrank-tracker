@@ -116,6 +116,7 @@ export default function SettingsPage() {
       <Navbar
         title="Einstellungen"
         left={<NavbarBackLink onClick={() => navigate('/')} text="Zurück" />}
+        className="settings-navbar"
       />
 
       {/* Freezer Name */}
