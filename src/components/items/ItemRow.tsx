@@ -15,7 +15,9 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
   const [offsetX, setOffsetX] = useState(0)
   const [swiping, setSwiping] = useState(false)
   const startX = useRef(0)
+  const startY = useRef(0)
   const startOffset = useRef(0)
+  const direction = useRef<'none' | 'horizontal' | 'vertical'>('none')
 
   const expired = useMemo(
     () => item.expiryDate ? isExpired(item.expiryDate) : false,
@@ -29,27 +31,41 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX
+    startY.current = e.touches[0].clientY
     startOffset.current = offsetX
+    direction.current = 'none'
     setSwiping(true)
   }, [offsetX])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!swiping) return
-    const diff = e.touches[0].clientX - startX.current + startOffset.current
+    const dx = e.touches[0].clientX - startX.current
+    const dy = e.touches[0].clientY - startY.current
+
+    if (direction.current === 'none') {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
+      direction.current = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical'
+    }
+
+    if (direction.current === 'vertical') return
+
+    e.preventDefault()
+    const diff = dx + startOffset.current
     setOffsetX(Math.max(-100, Math.min(100, diff)))
   }, [swiping])
 
   const handleTouchEnd = useCallback(() => {
     setSwiping(false)
-    if (offsetX < -60) {
+    if (direction.current === 'horizontal' && offsetX < -60) {
       setOffsetX(0)
       onDelete(item.id)
-    } else if (offsetX > 60) {
+    } else if (direction.current === 'horizontal' && offsetX > 60) {
       setOffsetX(0)
       onEdit(item)
     } else {
       setOffsetX(0)
     }
+    direction.current = 'none'
   }, [offsetX, item, onDelete, onEdit])
 
   return (
