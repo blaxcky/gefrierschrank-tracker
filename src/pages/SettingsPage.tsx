@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Page,
@@ -26,6 +26,22 @@ export default function SettingsPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault()
+      setInstallPrompt(e as BeforeInstallPromptEvent)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  const handleInstall = async () => {
+    if (!installPrompt) return
+    await installPrompt.prompt()
+    setInstallPrompt(null)
+  }
 
   const handleSaveName = async () => {
     if (freezer && freezerName.trim()) {
@@ -221,6 +237,14 @@ export default function SettingsPage() {
           title={<span style={{ color: '#FF3B30' }}>Alle Daten löschen</span>}
           onClick={() => setShowClearConfirm(true)}
         />
+        {installPrompt && (
+          <ListItem
+            link
+            title="App installieren"
+            subtitle="Als App auf dem Gerät installieren"
+            onClick={handleInstall}
+          />
+        )}
         <ListItem
           link
           title="App aktualisieren"
