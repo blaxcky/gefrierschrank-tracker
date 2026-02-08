@@ -24,93 +24,190 @@ html, body, #root {
   }
 }
 
-.freezer-body {
-  background: linear-gradient(180deg, #E8E8ED 0%, #D1D1D6 100%);
-  border-radius: 16px;
-  padding: 12px;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border: 2px solid #C7C7CC;
+/* === FREEZER CABINET === */
+.freezer-cabinet {
+  padding: 16px;
 }
 
-.freezer-top {
-  background: linear-gradient(180deg, #D1D1D6 0%, #C7C7CC 100%);
-  border-radius: 16px 16px 4px 4px;
-  padding: 8px 16px;
-  margin-bottom: 4px;
+.freezer-outer {
+  background: linear-gradient(180deg, #B8BCC2 0%, #A0A4AA 50%, #8E9298 100%);
+  border-radius: 20px;
+  padding: 3px;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.25),
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.freezer-inner {
+  background: linear-gradient(180deg, #2C3E50 0%, #1a2533 100%);
+  border-radius: 18px;
+  padding: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle frost texture overlay */
+.freezer-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.03) 0%, transparent 50%);
+  pointer-events: none;
+  border-radius: 18px;
+}
+
+/* Freezer brand/logo strip */
+.freezer-brand {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #AEAEB2;
+  gap: 6px;
+  padding: 6px 0 8px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
 }
 
+/* === DRAWER SLOT (realistic plastic drawer) === */
 .drawer-slot {
-  background: white;
-  border-radius: 10px;
-  margin-bottom: 8px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
   position: relative;
-  overflow: hidden;
+  cursor: pointer;
+  margin-bottom: 6px;
 }
 
 .drawer-slot:last-child {
   margin-bottom: 0;
 }
 
-.drawer-slot:active {
-  background: #F2F2F7;
+/* The rail/frame the drawer sits in */
+.drawer-rail {
+  background: linear-gradient(180deg, #1e2d3d 0%, #243447 100%);
+  border-radius: 8px;
+  padding: 4px 4px 5px;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.drawer-handle {
-  width: 32px;
-  height: 4px;
-  background: #D1D1D6;
-  border-radius: 2px;
-  margin-right: 12px;
-  flex-shrink: 0;
+/* The drawer body - translucent plastic look */
+.drawer-body {
+  background: linear-gradient(
+    180deg,
+    rgba(200, 220, 240, 0.25) 0%,
+    rgba(180, 200, 220, 0.18) 40%,
+    rgba(160, 185, 210, 0.12) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   position: relative;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  overflow: hidden;
+  transition: background 0.15s ease;
 }
 
-.drawer-handle::before,
-.drawer-handle::after {
+.drawer-body:active {
+  background: linear-gradient(
+    180deg,
+    rgba(200, 220, 240, 0.35) 0%,
+    rgba(180, 200, 220, 0.28) 40%,
+    rgba(160, 185, 210, 0.20) 100%
+  );
+}
+
+/* Frost/ice shimmer on the drawer */
+.drawer-body::before {
   content: '';
   position: absolute;
+  top: 0;
   left: 0;
-  width: 100%;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 30%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.25) 70%, transparent 100%);
+}
+
+/* Handle bar at the top of the drawer */
+.drawer-handle-bar {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
   height: 4px;
-  background: #D1D1D6;
+  background: linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.15) 100%);
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Drawer label text */
+.drawer-label {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Color indicator strip on the left */
+.drawer-color-strip {
+  width: 3px;
+  height: 24px;
   border-radius: 2px;
-}
-
-.drawer-handle::before {
-  top: -7px;
-}
-
-.drawer-handle::after {
-  top: 7px;
-}
-
-.color-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
   flex-shrink: 0;
-  margin-right: 10px;
+  opacity: 0.8;
 }
 
+/* Item count badge */
 .item-count-badge {
-  background: #F2F2F7;
-  color: #8E8E93;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
   border-radius: 12px;
   padding: 2px 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Chevron arrow */
+.drawer-chevron {
+  opacity: 0.3;
+  margin-left: 4px;
+}
+
+/* Warning dot for expired items */
+.warning-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #FF3B30;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  box-shadow: 0 0 6px rgba(255, 59, 48, 0.6);
+}
+
+/* Items preview text inside drawer */
+.drawer-preview {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 11px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
 }
 
 .expiry-warning {
@@ -163,12 +260,4 @@ html, body, #root {
   border-color: #007AFF;
 }
 
-.warning-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #FF3B30;
-  position: absolute;
-  top: 8px;
-  right: 8px;
-}
+/* (warning-dot moved to drawer section above) */
