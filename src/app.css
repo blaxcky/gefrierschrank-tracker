@@ -34,10 +34,7 @@ html, body, #root {
   background: linear-gradient(180deg, #E5E7EB 0%, #D1D5DB 50%, #C9CDD3 100%);
   border-radius: 20px;
   padding: 3px;
-  box-shadow:
-    0 6px 24px rgba(0, 0, 0, 0.10),
-    0 2px 6px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
 }
 
 /* Inner wall — frosty white/light blue */
@@ -47,18 +44,6 @@ html, body, #root {
   padding: 10px;
   position: relative;
   overflow: hidden;
-}
-
-/* Subtle frost texture overlay */
-.freezer-inner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 25% 20%, rgba(255,255,255,0.6) 0%, transparent 50%),
-    radial-gradient(circle at 75% 80%, rgba(200,220,240,0.15) 0%, transparent 50%);
-  pointer-events: none;
-  border-radius: 18px;
 }
 
 /* Freezer brand/logo strip */
@@ -80,6 +65,11 @@ html, body, #root {
   position: relative;
   cursor: pointer;
   margin-bottom: 6px;
+  transition: transform 0.15s ease;
+}
+
+.drawer-slot:active {
+  transform: scale(0.98) translateY(2px);
 }
 
 .drawer-slot:last-child {
@@ -114,19 +104,14 @@ html, body, #root {
   justify-content: space-between;
   position: relative;
   overflow: hidden;
-  transition: background 0.15s ease;
+  transition: opacity 0.15s ease;
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .drawer-body:active {
-  background: linear-gradient(
-    180deg,
-    rgba(235, 240, 248, 0.95) 0%,
-    rgba(228, 234, 245, 0.92) 50%,
-    rgba(220, 228, 240, 0.90) 100%
-  );
+  opacity: 0.85;
 }
 
 /* Light frost shimmer on the drawer top edge */

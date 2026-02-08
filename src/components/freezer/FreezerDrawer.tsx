@@ -1,6 +1,6 @@
+import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'motion/react'
-import { useItemCount, useExpiredItemCount, useItems } from '../../hooks/useFreezerData'
+import { useDrawerStats } from '../../hooks/useFreezerData'
 import type { Drawer } from '../../db/database'
 
 interface FreezerDrawerProps {
@@ -10,46 +10,45 @@ interface FreezerDrawerProps {
 
 export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProps) {
   const navigate = useNavigate()
-  const itemCount = useItemCount(drawer.id)
-  const expiredCount = useExpiredItemCount(drawer.id)
-  const items = useItems(drawer.id)
+  const stats = useDrawerStats(drawer.id)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  let longPressTimer: ReturnType<typeof setTimeout> | null = null
+  const items = stats?.items ?? []
+  const itemCount = stats?.itemCount ?? 0
+  const expiredCount = stats?.expiredCount ?? 0
 
   const handlePointerDown = () => {
-    longPressTimer = setTimeout(() => {
+    longPressTimer.current = setTimeout(() => {
       onLongPress(drawer)
-      longPressTimer = null
+      longPressTimer.current = null
     }, 500)
   }
 
   const handlePointerUp = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer)
-      longPressTimer = null
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
       navigate(`/drawer/${drawer.id}`)
     }
   }
 
   const handlePointerLeave = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer)
-      longPressTimer = null
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
     }
   }
 
   // Preview: show first few item names
-  const previewText = (items ?? [])
+  const previewText = items
     .slice(0, 3)
     .map(i => i.name)
     .join(', ')
-  const hasMore = (items ?? []).length > 3
+  const hasMore = items.length > 3
 
   return (
-    <motion.div
+    <div
       className="drawer-slot"
-      whileTap={{ scale: 0.98, y: 2 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 25 }}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
@@ -60,7 +59,7 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
           <div className="drawer-handle-bar" />
 
           {/* Warning dot for expired items */}
-          {(expiredCount ?? 0) > 0 && <div className="warning-dot" />}
+          {expiredCount > 0 && <div className="warning-dot" />}
 
           {/* Left side: color strip + label */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: 0 }}>
@@ -80,7 +79,7 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
           {/* Right side: count + chevron */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <span className="item-count-badge">
-              {itemCount ?? 0}
+              {itemCount}
             </span>
             <svg className="drawer-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">
               <path d="M1 1L6 6L1 11" stroke="#C7C7CC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -88,6 +87,6 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }

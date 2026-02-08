@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo, useCallback, memo } from 'react'
 import type { Item, Tag } from '../../db/database'
 import ExpiryBadge from '../common/ExpiryBadge'
 import { formatDate } from '../../utils/dates'
@@ -10,34 +10,42 @@ interface ItemRowProps {
   onDelete: (id: string) => void
 }
 
-export default function ItemRow({ item, tags, onDelete }: ItemRowProps) {
-  const tagObjects = tags.filter(t => item.tags.includes(t.name))
+export default memo(function ItemRow({ item, tags, onDelete }: ItemRowProps) {
   const [offsetX, setOffsetX] = useState(0)
   const [swiping, setSwiping] = useState(false)
   const startX = useRef(0)
-  const expired = item.expiryDate ? isExpired(item.expiryDate) : false
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const expired = useMemo(
+    () => item.expiryDate ? isExpired(item.expiryDate) : false,
+    [item.expiryDate]
+  )
+
+  const tagObjects = useMemo(
+    () => tags.filter(t => item.tags.includes(t.name)),
+    [tags, item.tags]
+  )
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX
     setSwiping(true)
-  }
+  }, [])
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (!swiping) return
     const diff = e.touches[0].clientX - startX.current
     if (diff < 0) {
       setOffsetX(Math.max(diff, -100))
     }
-  }
+  }, [swiping])
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = useCallback(() => {
     setSwiping(false)
     if (offsetX < -60) {
       setOffsetX(-100)
     } else {
       setOffsetX(0)
     }
-  }
+  }, [offsetX])
 
   return (
     <div style={{ position: 'relative', overflow: 'hidden' }}>
@@ -121,4 +129,4 @@ export default function ItemRow({ item, tags, onDelete }: ItemRowProps) {
       </div>
     </div>
   )
-}
+})
