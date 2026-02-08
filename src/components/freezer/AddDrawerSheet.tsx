@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Sheet, Toolbar, Button, List, ListInput } from 'konsta/react'
+import { Sheet, Button, List, ListInput } from 'konsta/react'
 import { addDrawer, updateDrawer, deleteDrawer } from '../../hooks/useFreezerData'
 import { DRAWER_COLORS } from '../../utils/defaultTags'
 import ConfirmDialog from '../common/ConfirmDialog'
@@ -48,13 +48,18 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
   return (
     <>
       <Sheet opened={opened} onBackdropClick={onClose} style={{ height: 'auto', maxHeight: '70vh' }}>
-        <Toolbar top>
-          <Button onClick={onClose}>Abbrechen</Button>
-          <span style={{ fontWeight: 600 }}>{editDrawer ? 'Fach bearbeiten' : 'Neues Fach'}</span>
-          <Button onClick={handleSave} style={{ fontWeight: 700 }}>
-            Fertig
-          </Button>
-        </Toolbar>
+        <div style={{ padding: '12px 16px 0' }}>
+          <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: '#D1D1D6', margin: '0 auto 12px' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button onClick={onClose} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
+              Abbrechen
+            </button>
+            <span style={{ fontWeight: 600, fontSize: 17 }}>{editDrawer ? 'Fach bearbeiten' : 'Neues Fach'}</span>
+            <button onClick={handleSave} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
+              Fertig
+            </button>
+          </div>
+        </div>
         <List strongIos insetIos style={{ margin: '16px' }}>
           <ListInput
             type="text"
