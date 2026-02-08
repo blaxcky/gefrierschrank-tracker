@@ -32,10 +32,11 @@ export default function DrawerViewPage() {
         position: 'sticky',
         top: 0,
         zIndex: 10,
-        background: 'linear-gradient(to bottom, #F2F2F7, #F2F2F7 90%, transparent)',
+        background: '#F2F2F7',
         paddingTop: 'env(safe-area-inset-top, 0px)',
+        borderBottom: '0.5px solid rgba(0,0,0,0.1)',
       }}>
-        <div style={{ padding: '12px 16px 16px' }}>
+        <div style={{ padding: '12px 16px 14px' }}>
           <button
             onClick={() => navigate('/')}
             style={{
@@ -47,8 +48,8 @@ export default function DrawerViewPage() {
               color: '#007AFF',
               fontSize: 16,
               cursor: 'pointer',
-              padding: 0,
-              marginBottom: 8,
+              padding: '6px 8px 6px 0',
+              margin: '-6px 0 4px -0px',
             }}
           >
             <svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="#007AFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -56,7 +57,14 @@ export default function DrawerViewPage() {
             </svg>
             Zurück
           </button>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              backgroundColor: drawer?.color ?? '#007AFF',
+              flexShrink: 0,
+            }} />
             <h1 style={{
               margin: 0,
               fontSize: 28,
@@ -68,12 +76,8 @@ export default function DrawerViewPage() {
               {drawer?.name ?? 'Fach'}
             </h1>
             {items && items.length > 0 && (
-              <span style={{
-                fontSize: 15,
-                color: '#8E8E93',
-                fontWeight: 400,
-              }}>
-                {items.length} {items.length === 1 ? 'Artikel' : 'Artikel'}
+              <span className="item-count-badge">
+                {items.length}
               </span>
             )}
           </div>
