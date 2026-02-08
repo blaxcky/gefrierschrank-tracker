@@ -63,6 +63,7 @@ export default function DrawerViewPage() {
               fontWeight: 700,
               letterSpacing: -0.5,
               color: '#1C1C1E',
+              fontFamily: "'Nunito', sans-serif",
             }}>
               {drawer?.name ?? 'Fach'}
             </h1>
