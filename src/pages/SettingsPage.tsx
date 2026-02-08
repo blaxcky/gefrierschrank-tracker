@@ -80,7 +80,7 @@ export default function SettingsPage() {
     }
 
     // 3. Seite komplett neu laden
-    window.location.replace('/')
+    window.location.reload()
   }
 
   const handleAddTag = async () => {
