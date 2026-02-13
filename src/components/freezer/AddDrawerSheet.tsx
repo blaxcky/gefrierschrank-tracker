@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Sheet, Button, List, ListInput } from 'konsta/react'
 import { addDrawer, updateDrawer, deleteDrawer } from '../../hooks/useFreezerData'
 import { DRAWER_COLORS } from '../../utils/defaultTags'
@@ -16,6 +16,8 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
   const [name, setName] = useState('')
   const [color, setColor] = useState(DRAWER_COLORS[0])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const saveInProgressRef = useRef(false)
 
   useEffect(() => {
     if (editDrawer) {
@@ -28,22 +30,50 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
   }, [editDrawer, opened])
 
   const handleSave = async () => {
+    if (saveInProgressRef.current || isSaving) return
     if (!name.trim()) return
-    if (editDrawer) {
-      await updateDrawer(editDrawer.id, { name: name.trim(), color })
-    } else {
-      await addDrawer(freezerId, name.trim(), color)
+
+    saveInProgressRef.current = true
+    setIsSaving(true)
+
+    try {
+      if (editDrawer) {
+        await updateDrawer(editDrawer.id, { name: name.trim(), color })
+      } else {
+        await addDrawer(freezerId, name.trim(), color)
+      }
+      onClose()
+    } finally {
+      saveInProgressRef.current = false
+      setIsSaving(false)
     }
-    onClose()
   }
 
   const handleDelete = async () => {
-    if (editDrawer) {
-      await deleteDrawer(editDrawer.id)
+    if (saveInProgressRef.current || isSaving) return
+
+    saveInProgressRef.current = true
+    setIsSaving(true)
+
+    try {
+      if (editDrawer) {
+        await deleteDrawer(editDrawer.id)
+      }
+      setShowDeleteConfirm(false)
+      onClose()
+    } finally {
+      saveInProgressRef.current = false
+      setIsSaving(false)
     }
-    setShowDeleteConfirm(false)
-    onClose()
   }
+
+  // Reset saving state when sheet closes
+  useEffect(() => {
+    if (!opened) {
+      saveInProgressRef.current = false
+      setIsSaving(false)
+    }
+  }, [opened])
 
   return (
     <>
@@ -55,8 +85,8 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
               Abbrechen
             </button>
             <span style={{ fontWeight: 600, fontSize: 17 }}>{editDrawer ? 'Fach bearbeiten' : 'Neues Fach'}</span>
-            <button onClick={handleSave} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
-              Fertig
+            <button onClick={handleSave} disabled={isSaving} style={{ color: isSaving ? '#C7C7CC' : '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
+              {isSaving ? 'Speichern...' : 'Fertig'}
             </button>
           </div>
         </div>

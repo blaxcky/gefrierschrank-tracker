@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Sheet, List, ListInput } from 'konsta/react'
 import { addItem, updateItem } from '../../hooks/useFreezerData'
 import type { Item } from '../../db/database'
@@ -21,6 +21,8 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
   const [tags, setTags] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const saveInProgressRef = useRef(false)
 
   useEffect(() => {
     if (opened) {
@@ -43,25 +45,44 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
   }, [opened, editItem])
 
   const handleSave = async () => {
+    // Prevent multiple simultaneous save attempts
+    if (saveInProgressRef.current || isSaving) return
     if (!name.trim()) return
-    const qty = Math.max(1, parseInt(quantity) || 1)
-    const expiry = expiryDate ? new Date(expiryDate + 'T00:00:00') : undefined
 
-    if (editItem) {
-      await updateItem(editItem.id, {
-        name: name.trim(),
-        quantity: qty,
-        unit,
-        tags,
-        notes: notes.trim(),
-        expiryDate: expiry,
-      })
-      onSave?.()
-    } else {
-      await addItem(drawerId, name.trim(), qty, unit, tags, notes.trim(), expiry)
+    saveInProgressRef.current = true
+    setIsSaving(true)
+
+    try {
+      const qty = Math.max(1, parseInt(quantity) || 1)
+      const expiry = expiryDate ? new Date(expiryDate + 'T00:00:00') : undefined
+
+      if (editItem) {
+        await updateItem(editItem.id, {
+          name: name.trim(),
+          quantity: qty,
+          unit,
+          tags,
+          notes: notes.trim(),
+          expiryDate: expiry,
+        })
+        onSave?.()
+      } else {
+        await addItem(drawerId, name.trim(), qty, unit, tags, notes.trim(), expiry)
+      }
+      onClose()
+    } finally {
+      saveInProgressRef.current = false
+      setIsSaving(false)
     }
-    onClose()
   }
+
+  // Reset saving state when sheet closes
+  useEffect(() => {
+    if (!opened) {
+      saveInProgressRef.current = false
+      setIsSaving(false)
+    }
+  }, [opened])
 
   return (
     <Sheet opened={opened} onBackdropClick={onClose} style={{ height: 'auto', maxHeight: '85vh', overflow: 'auto' }}>
@@ -72,8 +93,8 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
             Abbrechen
           </button>
           <span style={{ fontWeight: 600, fontSize: 17 }}>{editItem ? 'Artikel bearbeiten' : 'Neuer Artikel'}</span>
-          <button onClick={handleSave} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
-            Speichern
+          <button onClick={handleSave} disabled={isSaving} style={{ color: isSaving ? '#C7C7CC' : '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
+            {isSaving ? 'Speichern...' : 'Speichern'}
           </button>
         </div>
       </div>
