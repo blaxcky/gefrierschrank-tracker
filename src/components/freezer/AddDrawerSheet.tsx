@@ -43,6 +43,9 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
         await addDrawer(freezerId, name.trim(), color)
       }
       onClose()
+    } catch (error) {
+      console.error('Failed to save drawer:', error)
+      alert('Speichern fehlgeschlagen. Bitte erneut versuchen.')
     } finally {
       saveInProgressRef.current = false
       setIsSaving(false)
@@ -61,27 +64,36 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
       }
       setShowDeleteConfirm(false)
       onClose()
+    } catch (error) {
+      console.error('Failed to delete drawer:', error)
+      alert('Löschen fehlgeschlagen. Bitte erneut versuchen.')
     } finally {
       saveInProgressRef.current = false
       setIsSaving(false)
     }
   }
 
-  // Reset saving state when sheet closes
-  useEffect(() => {
-    if (!opened) {
-      saveInProgressRef.current = false
-      setIsSaving(false)
-    }
-  }, [opened])
+  const handleRequestClose = () => {
+    if (isSaving || saveInProgressRef.current) return
+    onClose()
+  }
+
+  const handleCancelDelete = () => {
+    if (isSaving || saveInProgressRef.current) return
+    setShowDeleteConfirm(false)
+  }
 
   return (
     <>
-      <Sheet opened={opened} onBackdropClick={onClose} style={{ height: 'auto', maxHeight: '70vh' }}>
+      <Sheet opened={opened} onBackdropClick={handleRequestClose} style={{ height: 'auto', maxHeight: '70vh' }}>
         <div style={{ padding: '12px 16px 0' }}>
           <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: '#D1D1D6', margin: '0 auto 12px' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button onClick={onClose} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
+            <button
+              onClick={handleRequestClose}
+              disabled={isSaving}
+              style={{ color: isSaving ? '#C7C7CC' : '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}
+            >
               Abbrechen
             </button>
             <span style={{ fontWeight: 600, fontSize: 17 }}>{editDrawer ? 'Fach bearbeiten' : 'Neues Fach'}</span>
@@ -118,6 +130,7 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
             <Button
               large
               tonal
+              disabled={isSaving}
               onClick={() => setShowDeleteConfirm(true)}
               style={{ color: '#FF3B30' }}
             >
@@ -131,7 +144,7 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
         title="Fach löschen?"
         content="Alle Artikel in diesem Fach werden ebenfalls gelöscht."
         onConfirm={handleDelete}
-        onCancel={() => setShowDeleteConfirm(false)}
+        onCancel={handleCancelDelete}
       />
     </>
   )

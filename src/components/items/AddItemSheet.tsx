@@ -53,7 +53,7 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
     setIsSaving(true)
 
     try {
-      const qty = Math.max(1, parseInt(quantity) || 1)
+      const qty = Math.max(1, parseInt(quantity, 10) || 1)
       const expiry = expiryDate ? new Date(expiryDate + 'T00:00:00') : undefined
 
       if (editItem) {
@@ -70,26 +70,30 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
         await addItem(drawerId, name.trim(), qty, unit, tags, notes.trim(), expiry)
       }
       onClose()
+    } catch (error) {
+      console.error('Failed to save item:', error)
+      alert('Speichern fehlgeschlagen. Bitte erneut versuchen.')
     } finally {
       saveInProgressRef.current = false
       setIsSaving(false)
     }
   }
 
-  // Reset saving state when sheet closes
-  useEffect(() => {
-    if (!opened) {
-      saveInProgressRef.current = false
-      setIsSaving(false)
-    }
-  }, [opened])
+  const handleRequestClose = () => {
+    if (isSaving || saveInProgressRef.current) return
+    onClose()
+  }
 
   return (
-    <Sheet opened={opened} onBackdropClick={onClose} style={{ height: 'auto', maxHeight: '85vh', overflow: 'auto' }}>
+    <Sheet opened={opened} onBackdropClick={handleRequestClose} style={{ height: 'auto', maxHeight: '85vh', overflow: 'auto' }}>
       <div style={{ padding: '12px 16px 0' }}>
         <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: '#D1D1D6', margin: '0 auto 12px' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button onClick={onClose} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
+          <button
+            onClick={handleRequestClose}
+            disabled={isSaving}
+            style={{ color: isSaving ? '#C7C7CC' : '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}
+          >
             Abbrechen
           </button>
           <span style={{ fontWeight: 600, fontSize: 17 }}>{editItem ? 'Artikel bearbeiten' : 'Neuer Artikel'}</span>

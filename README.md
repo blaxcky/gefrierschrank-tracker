@@ -71,3 +71,21 @@ export default defineConfig([
   },
 ])
 ```
+
+## Deployment targets
+
+This repository now supports parallel deployments:
+
+- GitHub Pages via `.github/workflows/deploy.yml` with `vite --mode github`
+- Cloudflare Pages via Cloudflare's direct Git integration with `vite --mode cloudflare`
+
+The Vite base path and PWA `scope/start_url` are selected automatically from the Vite mode.
+
+### Cloudflare direct setup
+
+In Cloudflare Pages, connect this GitHub repository and use:
+
+- Build command: `npm run build -- --mode cloudflare`
+- Build output directory: `dist`
+
+No Cloudflare deploy secrets are required in GitHub when using Cloudflare direct builds.
