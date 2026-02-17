@@ -34,6 +34,16 @@ export function useItems(drawerId: string | undefined) {
   )
 }
 
+export function useItemsByFreezer(freezerId: string | undefined) {
+  return useLiveQuery(async () => {
+    if (!freezerId) return []
+    const drawers = await db.drawers.where('freezerId').equals(freezerId).toArray()
+    const drawerIds = drawers.map(drawer => drawer.id)
+    if (drawerIds.length === 0) return []
+    return db.items.where('drawerId').anyOf(drawerIds).toArray()
+  }, [freezerId])
+}
+
 export function useDrawerStats(drawerId: string) {
   return useLiveQuery(async () => {
     const items = await db.items.where('drawerId').equals(drawerId).toArray()

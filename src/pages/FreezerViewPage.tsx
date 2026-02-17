@@ -53,6 +53,38 @@ export default function FreezerViewPage() {
       />
 
       <FreezerBody>
+        <div
+          style={{
+            margin: '0 12px 12px',
+            background: 'white',
+            border: '1px solid #E5E5EA',
+            borderRadius: 12,
+            padding: '12px 14px',
+          }}
+        >
+          <div style={{ fontWeight: 600, fontSize: 15, color: '#1C1C1E' }}>
+            Ablauf-Check
+          </div>
+          <p style={{ margin: '6px 0 10px', color: '#8E8E93', fontSize: 13, lineHeight: 1.4 }}>
+            Abgelaufene und bald ablaufende Lebensmittel mit Filtern anzeigen.
+          </p>
+          <button
+            onClick={() => navigate('/ablauf-check')}
+            style={{
+              background: '#007AFF',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              padding: '8px 12px',
+              fontWeight: 600,
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            Check öffnen
+          </button>
+        </div>
+
         {exportReminder.shouldShow && (
           <div
             style={{
