@@ -45,16 +45,18 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
     .map(i => i.name)
     .join(', ')
   const hasMore = items.length > 3
+  const previewDisplay = previewText ? `${previewText}${hasMore ? ', ...' : ''}` : ''
+  const isEmpty = itemCount === 0
 
   return (
     <div
-      className="drawer-slot"
+      className={`drawer-slot ${isEmpty ? 'drawer-slot-empty' : ''}`}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
     >
       <div className="drawer-rail">
-        <div className="drawer-body">
+        <div className="drawer-body drawer-body-overview">
           {/* Handle bar */}
           <div className="drawer-handle-bar" />
 
@@ -68,11 +70,9 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
               <div className="drawer-label">
                 {drawer.name}
               </div>
-              {previewText && (
-                <div className="drawer-preview">
-                  {previewText}{hasMore ? ', ...' : ''}
-                </div>
-              )}
+              <div className="drawer-preview">
+                {previewDisplay || '\u00A0'}
+              </div>
             </div>
           </div>
 

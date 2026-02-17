@@ -114,6 +114,25 @@ html, body, #root {
   opacity: 0.85;
 }
 
+/* Overview drawers are slightly larger and fixed-height */
+.drawer-body-overview {
+  min-height: 68px;
+}
+
+.drawer-body-overview .drawer-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drawer-body-overview .drawer-preview {
+  min-height: 14px;
+}
+
+.drawer-slot-empty .drawer-body-overview {
+  opacity: 0.72;
+}
+
 /* Light frost shimmer on the drawer top edge */
 .drawer-body::before {
   content: '';
