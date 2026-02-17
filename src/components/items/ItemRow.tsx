@@ -9,9 +9,10 @@ interface ItemRowProps {
   tags: Tag[]
   onDelete: (id: string) => void
   onEdit: (item: Item) => void
+  onDuplicate: (item: Item) => void
 }
 
-export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowProps) {
+export default memo(function ItemRow({ item, tags, onDelete, onEdit, onDuplicate }: ItemRowProps) {
   const [offsetX, setOffsetX] = useState(0)
   const [swiping, setSwiping] = useState(false)
   const startX = useRef(0)
@@ -165,9 +166,27 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
               </p>
             )}
           </div>
-          <span style={{ color: '#8E8E93', fontSize: 14, whiteSpace: 'nowrap', marginLeft: 8 }}>
-            {item.quantity} {item.unit}
-          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, marginLeft: 8 }}>
+            <span style={{ color: '#8E8E93', fontSize: 14, whiteSpace: 'nowrap' }}>
+              {item.quantity} {item.unit}
+            </span>
+            <button
+              type="button"
+              onClick={() => onDuplicate(item)}
+              style={{
+                background: '#F2F2F7',
+                border: 'none',
+                borderRadius: 8,
+                color: '#007AFF',
+                fontSize: 12,
+                fontWeight: 600,
+                padding: '4px 8px',
+                cursor: 'pointer',
+              }}
+            >
+              Duplizieren
+            </button>
+          </div>
         </div>
       </div>
     </div>
