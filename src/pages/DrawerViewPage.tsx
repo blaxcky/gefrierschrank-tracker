@@ -14,8 +14,10 @@ export default function DrawerViewPage() {
   const tags = useTags()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editItem, setEditItem] = useState<Item | null>(null)
+  const [isOpeningDrawerHeader, setIsOpeningDrawerHeader] = useState(true)
   const [isClosingDrawerHeader, setIsClosingDrawerHeader] = useState(false)
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleEdit = (item: Item) => {
     setEditItem(item)
@@ -28,7 +30,7 @@ export default function DrawerViewPage() {
   }
 
   const handleCloseToOverview = () => {
-    if (isClosingDrawerHeader) return
+    if (isClosingDrawerHeader || isOpeningDrawerHeader) return
     setIsClosingDrawerHeader(true)
     closeTimerRef.current = setTimeout(() => {
       navigate('/')
@@ -36,7 +38,14 @@ export default function DrawerViewPage() {
   }
 
   useEffect(() => {
+    openTimerRef.current = setTimeout(() => {
+      setIsOpeningDrawerHeader(false)
+    }, 280)
+
     return () => {
+      if (openTimerRef.current) {
+        clearTimeout(openTimerRef.current)
+      }
       if (closeTimerRef.current) {
         clearTimeout(closeTimerRef.current)
       }
@@ -77,8 +86,8 @@ export default function DrawerViewPage() {
           </button>
           {/* Drawer-Card Style Title */}
           <div
-            className={`drawer-slot drawer-detail-card ${isClosingDrawerHeader ? 'closing' : ''}`}
-            style={{ marginBottom: 0, cursor: isClosingDrawerHeader ? 'default' : 'pointer' }}
+            className={`drawer-slot drawer-detail-card ${isOpeningDrawerHeader ? 'opening' : ''} ${isClosingDrawerHeader ? 'closing' : ''}`}
+            style={{ marginBottom: 0, cursor: (isClosingDrawerHeader || isOpeningDrawerHeader) ? 'default' : 'pointer' }}
             onClick={handleCloseToOverview}
             role="button"
             tabIndex={0}

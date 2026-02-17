@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDrawerStats } from '../../hooks/useFreezerData'
 import type { Drawer } from '../../db/database'
@@ -12,6 +12,8 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
   const navigate = useNavigate()
   const stats = useDrawerStats(drawer.id)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [isOpening, setIsOpening] = useState(false)
 
   const items = stats?.items ?? []
   const itemCount = stats?.itemCount ?? 0
@@ -28,7 +30,10 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current)
       longPressTimer.current = null
-      navigate(`/drawer/${drawer.id}`)
+      setIsOpening(true)
+      openTimer.current = setTimeout(() => {
+        navigate(`/drawer/${drawer.id}`)
+      }, 220)
     }
   }
 
@@ -38,6 +43,13 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
       longPressTimer.current = null
     }
   }
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) clearTimeout(longPressTimer.current)
+      if (openTimer.current) clearTimeout(openTimer.current)
+    }
+  }, [])
 
   // Preview: show first few item names
   const previewText = items
@@ -50,7 +62,7 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
 
   return (
     <div
-      className={`drawer-slot ${isEmpty ? 'drawer-slot-empty' : ''}`}
+      className={`drawer-slot ${isEmpty ? 'drawer-slot-empty' : ''} ${isOpening ? 'opening' : ''}`}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}

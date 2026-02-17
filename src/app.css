@@ -76,8 +76,40 @@ html, body, #root {
   margin-bottom: 0;
 }
 
+.drawer-slot.opening {
+  pointer-events: none;
+}
+
+.drawer-slot.opening .drawer-body-overview {
+  animation: drawer-open-overview-body 0.22s ease forwards;
+}
+
+.drawer-slot.opening .drawer-rail {
+  animation: drawer-open-overview-rail 0.22s ease forwards;
+}
+
+.drawer-slot.opening .drawer-handle-bar {
+  animation: drawer-open-overview-handle 0.22s ease forwards;
+}
+
 .drawer-detail-card {
   outline: none;
+}
+
+.drawer-detail-card.opening {
+  pointer-events: none;
+}
+
+.drawer-detail-card.opening .drawer-body {
+  animation: drawer-open-body 0.28s ease forwards;
+}
+
+.drawer-detail-card.opening .drawer-rail {
+  animation: drawer-open-rail 0.28s ease forwards;
+}
+
+.drawer-detail-card.opening .drawer-handle-bar {
+  animation: drawer-open-handle 0.28s ease forwards;
 }
 
 .drawer-detail-card.closing {
@@ -130,6 +162,77 @@ html, body, #root {
   }
   100% {
     opacity: 0.35;
+  }
+}
+
+@keyframes drawer-open-overview-body {
+  0% {
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  100% {
+    transform: translateY(8px) scaleY(1.08);
+    opacity: 0.96;
+    filter: brightness(1.05);
+  }
+}
+
+@keyframes drawer-open-overview-rail {
+  0% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleY(1.06);
+    opacity: 0.95;
+  }
+}
+
+@keyframes drawer-open-overview-handle {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes drawer-open-body {
+  0% {
+    transform: translateY(-10px) scaleY(0.76);
+    opacity: 0.35;
+    filter: brightness(0.9);
+  }
+  55% {
+    transform: translateY(2px) scaleY(1.02);
+    opacity: 0.96;
+    filter: brightness(1.03);
+  }
+  100% {
+    transform: translateY(0) scaleY(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes drawer-open-rail {
+  0% {
+    transform: scaleY(0.85);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes drawer-open-handle {
+  0% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
   }
 }
 
