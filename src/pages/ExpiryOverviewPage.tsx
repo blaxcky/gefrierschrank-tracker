@@ -42,26 +42,21 @@ export default function ExpiryOverviewPage() {
     const today = toStartOfDay(new Date())
     const expiryThreshold = new Date(today)
     expiryThreshold.setDate(expiryThreshold.getDate() + expiringDays)
-
-    const hasExpiryFilter = includeExpired || includeExpiringSoon
+    const hasAnyFilter = includeExpired || includeExpiringSoon || useFrozenDays
 
     return allItems
       .filter(item => {
-        if (hasExpiryFilter) {
-          if (!item.expiryDate) return false
-          const expiry = item.expiryDate
-          const isExpired = expiry < today
-          const isExpiringSoon = expiry >= today && expiry <= expiryThreshold
-          const matchesExpiry = (includeExpired && isExpired) || (includeExpiringSoon && isExpiringSoon)
-          if (!matchesExpiry) return false
-        }
+        if (!hasAnyFilter) return true
 
-        if (useFrozenDays) {
-          const ageInDays = Math.floor((today.getTime() - toStartOfDay(item.dateAdded).getTime()) / DAY_MS)
-          if (ageInDays < frozenDays) return false
-        }
+        const expiry = item.expiryDate
+        const matchesExpired = Boolean(includeExpired && expiry && expiry < today)
+        const matchesExpiringSoon = Boolean(
+          includeExpiringSoon && expiry && expiry >= today && expiry <= expiryThreshold
+        )
+        const ageInDays = Math.floor((today.getTime() - toStartOfDay(item.dateAdded).getTime()) / DAY_MS)
+        const matchesFrozenDays = useFrozenDays && ageInDays >= frozenDays
 
-        return true
+        return matchesExpired || matchesExpiringSoon || matchesFrozenDays
       })
       .sort((a, b) => {
         if (a.expiryDate && b.expiryDate) {
