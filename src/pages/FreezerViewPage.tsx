@@ -34,18 +34,23 @@ export default function FreezerViewPage() {
         right={
           <button
             onClick={() => navigate('/settings')}
+            className="settings-icon-btn"
             style={{
               width: 36,
               height: 36,
               borderRadius: '50%',
               border: '1px solid #D1D1D6',
               background: '#FFFFFF',
+              appearance: 'none',
+              WebkitAppearance: 'none',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               padding: 0,
               lineHeight: 0,
+              outline: 'none',
+              boxShadow: 'none',
             }}
             aria-label="Einstellungen öffnen"
           >

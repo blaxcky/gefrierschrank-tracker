@@ -252,3 +252,8 @@ html, body, #root {
 .settings-navbar {
   background: #F2F2F7 !important;
 }
+
+.settings-icon-btn:focus-visible {
+  outline: 2px solid #007AFF !important;
+  outline-offset: 2px;
+}
