@@ -12,7 +12,7 @@ import {
   DialogButton,
 } from 'konsta/react'
 import { useFirstFreezer, useTags, updateFreezer, deleteTag, addTag } from '../hooks/useFreezerData'
-import { exportData, importData, downloadJson } from '../utils/export'
+import { exportData, importData, downloadJson, setLastExportAt } from '../utils/export'
 import { db } from '../db/database'
 
 export default function SettingsPage() {
@@ -54,6 +54,7 @@ export default function SettingsPage() {
     const data = await exportData()
     const date = new Date().toISOString().split('T')[0]
     downloadJson(data, `gefrierschrank-backup-${date}.json`)
+    setLastExportAt()
   }
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {

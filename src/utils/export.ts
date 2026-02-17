@@ -1,5 +1,16 @@
 import { db } from '../db/database'
 
+const LAST_EXPORT_AT_KEY = 'gefrierschrank:last-export-at'
+const DAY_MS = 24 * 60 * 60 * 1000
+const EXPORT_REMINDER_DAYS = 7
+
+export interface ExportReminderInfo {
+  shouldShow: boolean
+  lastExportAt: Date | null
+  daysSinceLastExport: number | null
+  maxAgeDays: number
+}
+
 export async function exportData(): Promise<string> {
   const freezers = await db.freezers.toArray()
   const drawers = await db.drawers.toArray()
@@ -40,4 +51,41 @@ export function downloadJson(content: string, filename: string) {
   a.download = filename
   a.click()
   URL.revokeObjectURL(url)
+}
+
+export function setLastExportAt(date = new Date()) {
+  localStorage.setItem(LAST_EXPORT_AT_KEY, date.toISOString())
+}
+
+export function getLastExportAt(): Date | null {
+  const rawValue = localStorage.getItem(LAST_EXPORT_AT_KEY)
+  if (!rawValue) return null
+  const date = new Date(rawValue)
+  if (Number.isNaN(date.getTime())) return null
+  return date
+}
+
+export function getExportReminderInfo(
+  now = new Date(),
+  maxAgeDays = EXPORT_REMINDER_DAYS
+): ExportReminderInfo {
+  const lastExportAt = getLastExportAt()
+  if (!lastExportAt) {
+    return {
+      shouldShow: true,
+      lastExportAt: null,
+      daysSinceLastExport: null,
+      maxAgeDays,
+    }
+  }
+
+  const ageInMs = now.getTime() - lastExportAt.getTime()
+  const daysSinceLastExport = Math.max(0, Math.floor(ageInMs / DAY_MS))
+
+  return {
+    shouldShow: ageInMs >= maxAgeDays * DAY_MS,
+    lastExportAt,
+    daysSinceLastExport,
+    maxAgeDays,
+  }
 }

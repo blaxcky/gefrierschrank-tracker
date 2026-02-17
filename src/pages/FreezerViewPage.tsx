@@ -7,11 +7,13 @@ import DrawerList from '../components/freezer/DrawerList'
 import AddDrawerSheet from '../components/freezer/AddDrawerSheet'
 import ReloadPrompt from '../components/common/ReloadPrompt'
 import type { Drawer } from '../db/database'
+import { getExportReminderInfo } from '../utils/export'
 
 export default function FreezerViewPage() {
   const freezer = useFirstFreezer()
   const drawers = useDrawers(freezer?.id)
   const navigate = useNavigate()
+  const exportReminder = getExportReminderInfo()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editDrawer, setEditDrawer] = useState<Drawer | null>(null)
 
@@ -51,6 +53,41 @@ export default function FreezerViewPage() {
       />
 
       <FreezerBody>
+        {exportReminder.shouldShow && (
+          <div
+            style={{
+              margin: '0 12px 12px',
+              background: '#FFF3CD',
+              border: '1px solid #F5D67A',
+              borderRadius: 12,
+              padding: '12px 14px',
+            }}
+          >
+            <div style={{ fontWeight: 600, fontSize: 15, color: '#6B4F00' }}>
+              Export empfohlen
+            </div>
+            <p style={{ margin: '6px 0 10px', color: '#6B4F00', fontSize: 13, lineHeight: 1.4 }}>
+              {exportReminder.lastExportAt
+                ? `Der letzte Export war vor ${exportReminder.daysSinceLastExport} Tagen. Bitte Daten erneut exportieren.`
+                : 'Es wurde noch kein Export gemacht. Bitte erstelle jetzt ein Backup deiner Daten.'}
+            </p>
+            <button
+              onClick={() => navigate('/settings')}
+              style={{
+                background: '#007AFF',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 12px',
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              Jetzt exportieren
+            </button>
+          </div>
+        )}
         <DrawerList
           drawers={drawers ?? []}
           onLongPressDrawer={handleLongPress}
