@@ -257,3 +257,12 @@ html, body, #root {
   outline: 2px solid #007AFF !important;
   outline-offset: 2px;
 }
+
+.settings-icon-btn {
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease;
+}
+
+.settings-icon-btn:active {
+  opacity: 0.55;
+}
