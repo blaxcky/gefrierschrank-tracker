@@ -4,6 +4,7 @@ import { addDrawer, updateDrawer, deleteDrawer } from '../../hooks/useFreezerDat
 import { DRAWER_COLORS } from '../../utils/defaultTags'
 import ConfirmDialog from '../common/ConfirmDialog'
 import type { Drawer } from '../../db/database'
+import { lockBodyScroll, unlockBodyScroll } from '../../utils/scrollLock'
 
 interface AddDrawerSheetProps {
   opened: boolean
@@ -28,6 +29,12 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
       setColor(DRAWER_COLORS[0])
     }
   }, [editDrawer, opened])
+
+  useEffect(() => {
+    if (!opened) return
+    lockBodyScroll()
+    return () => unlockBodyScroll()
+  }, [opened])
 
   const handleSave = async () => {
     if (saveLockRef.current) return
@@ -58,7 +65,11 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
 
   return (
     <>
-      <Sheet opened={opened} onBackdropClick={() => { if (!isSaving) onClose() }} style={{ height: 'auto', maxHeight: '70vh' }}>
+      <Sheet
+        opened={opened}
+        onBackdropClick={() => { if (!isSaving) onClose() }}
+        style={{ height: 'auto', maxHeight: '70vh', overscrollBehavior: 'contain' }}
+      >
         <div style={{ padding: '12px 16px 0' }}>
           <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: '#D1D1D6', margin: '0 auto 12px' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

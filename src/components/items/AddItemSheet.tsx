@@ -3,6 +3,7 @@ import { Sheet, Button, List, ListInput } from 'konsta/react'
 import { addItem, updateItem } from '../../hooks/useFreezerData'
 import type { Item } from '../../db/database'
 import TagPicker from './TagPicker'
+import { lockBodyScroll, unlockBodyScroll } from '../../utils/scrollLock'
 
 interface AddItemSheetProps {
   opened: boolean
@@ -43,6 +44,12 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
       }
     }
   }, [opened, editItem])
+
+  useEffect(() => {
+    if (!opened) return
+    lockBodyScroll()
+    return () => unlockBodyScroll()
+  }, [opened])
 
   const handleSave = async () => {
     if (saveLockRef.current) return
@@ -93,7 +100,11 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
   }
 
   return (
-    <Sheet opened={opened} onBackdropClick={() => { if (!isSaving) onClose() }} style={{ height: 'auto', maxHeight: '85vh', overflow: 'auto' }}>
+    <Sheet
+      opened={opened}
+      onBackdropClick={() => { if (!isSaving) onClose() }}
+      style={{ height: 'auto', maxHeight: '85vh', overflow: 'auto', overscrollBehavior: 'contain' }}
+    >
       <div style={{ padding: '12px 16px 0' }}>
         <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: '#D1D1D6', margin: '0 auto 12px' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
