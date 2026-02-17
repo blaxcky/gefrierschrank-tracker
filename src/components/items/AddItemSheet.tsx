@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Sheet, List, ListInput } from 'konsta/react'
+import { Sheet, Button, List, ListInput } from 'konsta/react'
 import { addItem, updateItem } from '../../hooks/useFreezerData'
 import type { Item } from '../../db/database'
 import TagPicker from './TagPicker'
@@ -67,6 +67,24 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
       } else {
         await addItem(drawerId, name.trim(), qty, unit, tags, notes.trim(), expiry)
       }
+      onClose()
+    } finally {
+      saveLockRef.current = false
+      setIsSaving(false)
+    }
+  }
+
+  const handleDuplicate = async () => {
+    if (saveLockRef.current || !editItem) return
+    if (!name.trim()) return
+
+    saveLockRef.current = true
+    setIsSaving(true)
+    const qty = Math.max(1, parseInt(quantity) || 1)
+    const expiry = expiryDate ? new Date(expiryDate + 'T00:00:00') : undefined
+
+    try {
+      await addItem(drawerId, name.trim(), qty, unit, tags, notes.trim(), expiry)
       onClose()
     } finally {
       saveLockRef.current = false
@@ -142,6 +160,14 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
           floatingLabel
         />
       </List>
+
+      {editItem && (
+        <div style={{ padding: '0 32px 24px' }}>
+          <Button large tonal disabled={isSaving} onClick={handleDuplicate} style={{ color: '#007AFF' }}>
+            {isSaving ? 'Speichert...' : 'Artikel duplizieren'}
+          </Button>
+        </div>
+      )}
     </Sheet>
   )
 }

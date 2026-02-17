@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Item, Tag } from '../../db/database'
-import { addItem, deleteItem } from '../../hooks/useFreezerData'
+import { deleteItem } from '../../hooks/useFreezerData'
 import ItemRow from './ItemRow'
 import EmptyState from '../common/EmptyState'
 import ConfirmDialog from '../common/ConfirmDialog'
@@ -39,18 +39,6 @@ export default function ItemList({ items, tags, onEdit }: ItemListProps) {
     }
   }
 
-  const handleDuplicate = async (item: Item) => {
-    await addItem(
-      item.drawerId,
-      item.name,
-      item.quantity,
-      item.unit,
-      [...item.tags],
-      item.notes,
-      item.expiryDate ? new Date(item.expiryDate) : undefined
-    )
-  }
-
   return (
     <>
       <div style={{ margin: '8px 0', borderRadius: 10, overflow: 'hidden', background: 'white' }}>
@@ -61,7 +49,6 @@ export default function ItemList({ items, tags, onEdit }: ItemListProps) {
             tags={tags}
             onDelete={() => setDeleteTarget(item)}
             onEdit={onEdit}
-            onDuplicate={handleDuplicate}
           />
         ))}
       </div>
