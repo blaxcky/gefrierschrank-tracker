@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Page, Fab } from 'konsta/react'
 import { useDrawer, useItems, useTags } from '../hooks/useFreezerData'
@@ -14,6 +14,8 @@ export default function DrawerViewPage() {
   const tags = useTags()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editItem, setEditItem] = useState<Item | null>(null)
+  const [isClosingDrawerHeader, setIsClosingDrawerHeader] = useState(false)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleEdit = (item: Item) => {
     setEditItem(item)
@@ -24,6 +26,22 @@ export default function DrawerViewPage() {
     setSheetOpen(false)
     setEditItem(null)
   }
+
+  const handleCloseToOverview = () => {
+    if (isClosingDrawerHeader) return
+    setIsClosingDrawerHeader(true)
+    closeTimerRef.current = setTimeout(() => {
+      navigate('/')
+    }, 280)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current)
+      }
+    }
+  }, [])
 
   return (
     <Page>
@@ -58,7 +76,20 @@ export default function DrawerViewPage() {
             Zurück
           </button>
           {/* Drawer-Card Style Title */}
-          <div className="drawer-slot" style={{ cursor: 'default', marginBottom: 0 }}>
+          <div
+            className={`drawer-slot drawer-detail-card ${isClosingDrawerHeader ? 'closing' : ''}`}
+            style={{ marginBottom: 0, cursor: isClosingDrawerHeader ? 'default' : 'pointer' }}
+            onClick={handleCloseToOverview}
+            role="button"
+            tabIndex={0}
+            aria-label="Fach schließen und zur Übersicht"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleCloseToOverview()
+              }
+            }}
+          >
             <div className="drawer-rail">
               <div className="drawer-body" style={{ minHeight: 48 }}>
                 <div className="drawer-handle-bar" />
