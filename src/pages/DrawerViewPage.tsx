@@ -49,7 +49,7 @@ export default function DrawerViewPage() {
               fontSize: 16,
               cursor: 'pointer',
               padding: '6px 8px 6px 0',
-              margin: '-6px 0 4px -0px',
+              margin: '-6px 0 12px 0',
             }}
           >
             <svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="#007AFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
