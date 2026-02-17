@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Sheet, List, ListInput } from 'konsta/react'
 import { addItem, updateItem } from '../../hooks/useFreezerData'
 import type { Item } from '../../db/database'
@@ -21,6 +21,8 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
   const [tags, setTags] = useState<string[]>([])
   const [notes, setNotes] = useState('')
   const [expiryDate, setExpiryDate] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const saveLockRef = useRef(false)
 
   useEffect(() => {
     if (opened) {
@@ -43,37 +45,46 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
   }, [opened, editItem])
 
   const handleSave = async () => {
+    if (saveLockRef.current) return
     if (!name.trim()) return
+
+    saveLockRef.current = true
+    setIsSaving(true)
     const qty = Math.max(1, parseInt(quantity) || 1)
     const expiry = expiryDate ? new Date(expiryDate + 'T00:00:00') : undefined
 
-    if (editItem) {
-      await updateItem(editItem.id, {
-        name: name.trim(),
-        quantity: qty,
-        unit,
-        tags,
-        notes: notes.trim(),
-        expiryDate: expiry,
-      })
-      onSave?.()
-    } else {
-      await addItem(drawerId, name.trim(), qty, unit, tags, notes.trim(), expiry)
+    try {
+      if (editItem) {
+        await updateItem(editItem.id, {
+          name: name.trim(),
+          quantity: qty,
+          unit,
+          tags,
+          notes: notes.trim(),
+          expiryDate: expiry,
+        })
+        onSave?.()
+      } else {
+        await addItem(drawerId, name.trim(), qty, unit, tags, notes.trim(), expiry)
+      }
+      onClose()
+    } finally {
+      saveLockRef.current = false
+      setIsSaving(false)
     }
-    onClose()
   }
 
   return (
-    <Sheet opened={opened} onBackdropClick={onClose} style={{ height: 'auto', maxHeight: '85vh', overflow: 'auto' }}>
+    <Sheet opened={opened} onBackdropClick={() => { if (!isSaving) onClose() }} style={{ height: 'auto', maxHeight: '85vh', overflow: 'auto' }}>
       <div style={{ padding: '12px 16px 0' }}>
         <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: '#D1D1D6', margin: '0 auto 12px' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button onClick={onClose} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
+          <button disabled={isSaving} onClick={onClose} style={{ color: isSaving ? '#AEAEB2' : '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
             Abbrechen
           </button>
           <span style={{ fontWeight: 600, fontSize: 17 }}>{editItem ? 'Artikel bearbeiten' : 'Neuer Artikel'}</span>
-          <button onClick={handleSave} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
-            Speichern
+          <button disabled={isSaving} onClick={handleSave} style={{ color: isSaving ? '#AEAEB2' : '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
+            {isSaving ? 'Speichert...' : 'Speichern'}
           </button>
         </div>
       </div>

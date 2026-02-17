@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Sheet, Button, List, ListInput } from 'konsta/react'
 import { addDrawer, updateDrawer, deleteDrawer } from '../../hooks/useFreezerData'
 import { DRAWER_COLORS } from '../../utils/defaultTags'
@@ -16,6 +16,8 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
   const [name, setName] = useState('')
   const [color, setColor] = useState(DRAWER_COLORS[0])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const saveLockRef = useRef(false)
 
   useEffect(() => {
     if (editDrawer) {
@@ -28,13 +30,22 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
   }, [editDrawer, opened])
 
   const handleSave = async () => {
+    if (saveLockRef.current) return
     if (!name.trim()) return
-    if (editDrawer) {
-      await updateDrawer(editDrawer.id, { name: name.trim(), color })
-    } else {
-      await addDrawer(freezerId, name.trim(), color)
+
+    saveLockRef.current = true
+    setIsSaving(true)
+    try {
+      if (editDrawer) {
+        await updateDrawer(editDrawer.id, { name: name.trim(), color })
+      } else {
+        await addDrawer(freezerId, name.trim(), color)
+      }
+      onClose()
+    } finally {
+      saveLockRef.current = false
+      setIsSaving(false)
     }
-    onClose()
   }
 
   const handleDelete = async () => {
@@ -47,16 +58,16 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
 
   return (
     <>
-      <Sheet opened={opened} onBackdropClick={onClose} style={{ height: 'auto', maxHeight: '70vh' }}>
+      <Sheet opened={opened} onBackdropClick={() => { if (!isSaving) onClose() }} style={{ height: 'auto', maxHeight: '70vh' }}>
         <div style={{ padding: '12px 16px 0' }}>
           <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: '#D1D1D6', margin: '0 auto 12px' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button onClick={onClose} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
+            <button disabled={isSaving} onClick={onClose} style={{ color: isSaving ? '#AEAEB2' : '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
               Abbrechen
             </button>
             <span style={{ fontWeight: 600, fontSize: 17 }}>{editDrawer ? 'Fach bearbeiten' : 'Neues Fach'}</span>
-            <button onClick={handleSave} style={{ color: '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
-              Fertig
+            <button disabled={isSaving} onClick={handleSave} style={{ color: isSaving ? '#AEAEB2' : '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
+              {isSaving ? 'Speichert...' : 'Fertig'}
             </button>
           </div>
         </div>
