@@ -38,6 +38,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_BASE: gefrierschrank-tracker/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
