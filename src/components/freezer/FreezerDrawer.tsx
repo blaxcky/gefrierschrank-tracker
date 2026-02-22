@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDrawerStats } from '../../hooks/useFreezerData'
 import type { Drawer } from '../../db/database'
+import { ListItem } from 'konsta/react'
 
 interface FreezerDrawerProps {
   drawer: Drawer
@@ -61,44 +63,41 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
   const isEmpty = itemCount === 0
 
   return (
-    <div
-      className={`drawer-slot ${isEmpty ? 'drawer-slot-empty' : ''} ${isOpening ? 'opening' : ''}`}
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerLeave}
-    >
-      <div className="drawer-rail">
-        <div className="drawer-body drawer-body-overview">
-          {/* Handle bar */}
-          <div className="drawer-handle-bar" />
-
-          {/* Warning dot for expired items */}
-          {expiredCount > 0 && <div className="warning-dot" />}
-
-          {/* Left side: color strip + label */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: 0 }}>
-            <div className="drawer-color-strip" style={{ backgroundColor: drawer.color }} />
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div className="drawer-label">
-                {drawer.name}
-              </div>
-              <div className="drawer-preview">
-                {previewDisplay || '\u00A0'}
-              </div>
-            </div>
-          </div>
-
-          {/* Right side: count + chevron */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            <span className="item-count-badge">
-              {itemCount}
-            </span>
-            <svg className="drawer-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">
-              <path d="M1 1L6 6L1 11" stroke="#C7C7CC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        </div>
-      </div>
-    </div>
+    <ListItem
+      title={drawer.name}
+      subtitle={previewDisplay || '\u00A0'}
+      media={
+        <span
+          className="ft-dot"
+          style={{ width: 12, height: 12, backgroundColor: drawer.color, marginLeft: 2 }}
+          aria-hidden
+        />
+      }
+      after={
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span className="ft-count-pill">{itemCount}</span>
+          {expiredCount > 0 && <span className="ft-dot ft-dot-danger" aria-hidden />}
+        </span>
+      }
+      link
+      linkComponent="button"
+      linkProps={{
+        type: 'button',
+        onPointerDown: handlePointerDown,
+        onPointerUp: handlePointerUp,
+        onPointerLeave: handlePointerLeave,
+        onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            if (!isOpening) navigate(`/drawer/${drawer.id}`)
+          }
+        },
+        style: {
+          opacity: isEmpty ? 0.82 : 1,
+          transition: 'opacity 0.15s ease',
+        },
+        'aria-label': drawer.name,
+      }}
+    />
   )
 }

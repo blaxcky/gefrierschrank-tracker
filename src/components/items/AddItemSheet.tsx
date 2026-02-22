@@ -106,13 +106,13 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
       style={{ height: 'auto', maxHeight: '85vh', overflow: 'auto', overscrollBehavior: 'contain' }}
     >
       <div style={{ padding: '12px 16px 0' }}>
-        <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: '#D1D1D6', margin: '0 auto 12px' }} />
+        <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: 'var(--ft-tertiary-fill)', margin: '0 auto 12px' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button disabled={isSaving} onClick={onClose} style={{ color: isSaving ? '#AEAEB2' : '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
+          <button disabled={isSaving} onClick={onClose} type="button" style={{ color: isSaving ? 'var(--ft-tertiary-label)' : 'var(--ft-blue)', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
             Abbrechen
           </button>
           <span style={{ fontWeight: 600, fontSize: 17 }}>{editItem ? 'Artikel bearbeiten' : 'Neuer Artikel'}</span>
-          <button disabled={isSaving} onClick={handleSave} style={{ color: isSaving ? '#AEAEB2' : '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
+          <button disabled={isSaving} onClick={handleSave} type="button" style={{ color: isSaving ? 'var(--ft-tertiary-label)' : 'var(--ft-blue)', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
             {isSaving ? 'Speichert...' : 'Speichern'}
           </button>
         </div>
@@ -157,7 +157,7 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
       </List>
 
       <div style={{ padding: '0 24px' }}>
-        <p style={{ fontSize: 13, color: '#8E8E93', marginBottom: 8 }}>Tags</p>
+        <p style={{ fontSize: 13, color: 'var(--ft-secondary-label)', marginBottom: 8 }}>Tags</p>
         <TagPicker selectedTags={tags} onChange={setTags} />
       </div>
 
@@ -174,7 +174,7 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
 
       {editItem && (
         <div style={{ padding: '0 32px 24px' }}>
-          <Button large tonal disabled={isSaving} onClick={handleDuplicate} style={{ color: '#007AFF' }}>
+          <Button large tonal disabled={isSaving} onClick={handleDuplicate} style={{ color: 'var(--ft-blue)' }}>
             {isSaving ? 'Speichert...' : 'Artikel duplizieren'}
           </Button>
         </div>

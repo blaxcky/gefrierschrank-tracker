@@ -41,9 +41,9 @@ export default function TagPicker({ selectedTags, onChange }: TagPickerProps) {
             key={tag.id}
             className="tag-chip"
             style={{
-              backgroundColor: selectedTags.includes(tag.name) ? tag.color + '22' : '#F2F2F7',
-              color: selectedTags.includes(tag.name) ? tag.color : '#8E8E93',
-              border: `1px solid ${selectedTags.includes(tag.name) ? tag.color : 'transparent'}`,
+              backgroundColor: selectedTags.includes(tag.name) ? tag.color + '22' : 'var(--ft-tertiary-fill)',
+              color: selectedTags.includes(tag.name) ? tag.color : 'var(--ft-secondary-label)',
+              border: '1px solid transparent',
               cursor: 'pointer',
             }}
             onClick={() => toggleTag(tag.name)}
@@ -55,10 +55,10 @@ export default function TagPicker({ selectedTags, onChange }: TagPickerProps) {
           <div
             className="tag-chip"
             style={{
-              backgroundColor: '#F2F2F7',
-              color: '#007AFF',
+              backgroundColor: 'var(--ft-tertiary-fill)',
+              color: 'var(--ft-blue)',
               cursor: 'pointer',
-              border: '1px dashed #007AFF',
+              border: '1px dashed var(--ft-blue)',
             }}
             onClick={() => setShowNewTag(true)}
           >
@@ -74,7 +74,7 @@ export default function TagPicker({ selectedTags, onChange }: TagPickerProps) {
               placeholder="Tag-Name"
               autoFocus
               style={{
-                border: '1px solid #007AFF',
+                border: '1px solid var(--ft-blue)',
                 borderRadius: 12,
                 padding: '4px 10px',
                 fontSize: 12,
@@ -84,8 +84,9 @@ export default function TagPicker({ selectedTags, onChange }: TagPickerProps) {
             />
             <button
               onClick={handleAddTag}
+              type="button"
               style={{
-                background: '#007AFF',
+                background: 'var(--ft-blue)',
                 color: 'white',
                 border: 'none',
                 borderRadius: 12,

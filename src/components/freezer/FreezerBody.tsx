@@ -6,16 +6,15 @@ interface FreezerBodyProps {
 
 export default function FreezerBody({ children }: FreezerBodyProps) {
   return (
-    <div className="freezer-cabinet">
-      <div className="freezer-outer">
-        <div className="freezer-inner">
-          <div className="freezer-brand">
-            <span style={{ fontSize: 14 }}>&#10052;</span>
-            <span>Freezer</span>
-          </div>
-          {children}
-        </div>
-      </div>
+    <div
+      style={{
+        paddingLeft: 16,
+        paddingRight: 16,
+        paddingTop: 8,
+        paddingBottom: 'calc(16px + var(--sab))',
+      }}
+    >
+      {children}
     </div>
   )
 }

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Page, Fab } from 'konsta/react'
+import { Page, Navbar, NavbarBackLink } from 'konsta/react'
 import { useDrawer, useItems, useTags } from '../hooks/useFreezerData'
 import type { Item } from '../db/database'
 import ItemList from '../components/items/ItemList'
@@ -14,10 +14,6 @@ export default function DrawerViewPage() {
   const tags = useTags()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editItem, setEditItem] = useState<Item | null>(null)
-  const [isOpeningDrawerHeader, setIsOpeningDrawerHeader] = useState(true)
-  const [isClosingDrawerHeader, setIsClosingDrawerHeader] = useState(false)
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleEdit = (item: Item) => {
     setEditItem(item)
@@ -29,117 +25,34 @@ export default function DrawerViewPage() {
     setEditItem(null)
   }
 
-  const handleCloseToOverview = () => {
-    if (isClosingDrawerHeader || isOpeningDrawerHeader) return
-    setIsClosingDrawerHeader(true)
-    closeTimerRef.current = setTimeout(() => {
-      navigate('/')
-    }, 280)
-  }
-
-  useEffect(() => {
-    openTimerRef.current = setTimeout(() => {
-      setIsOpeningDrawerHeader(false)
-    }, 280)
-
-    return () => {
-      if (openTimerRef.current) {
-        clearTimeout(openTimerRef.current)
-      }
-      if (closeTimerRef.current) {
-        clearTimeout(closeTimerRef.current)
-      }
-    }
-  }, [])
+  const IconPlus = (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  )
 
   return (
     <Page>
-      {/* Custom Header */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        background: '#F2F2F7',
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        borderBottom: '0.5px solid rgba(0,0,0,0.1)',
-      }}>
-        <div style={{ padding: '12px 16px 14px' }}>
+      <Navbar
+        large
+        title={drawer?.name ?? 'Fach'}
+        left={<NavbarBackLink onClick={() => navigate('/')} text="Zurück" />}
+        right={
           <button
-            onClick={() => navigate('/')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              background: 'none',
-              border: 'none',
-              color: '#007AFF',
-              fontSize: 16,
-              cursor: 'pointer',
-              padding: '6px 8px 6px 0',
-              margin: '-6px 0 12px 0',
-            }}
+            className="ft-icon-btn"
+            onClick={() => setSheetOpen(true)}
+            aria-label="Produkt hinzufügen"
+            type="button"
           >
-            <svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="#007AFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="8,1 1,8 8,15" />
-            </svg>
-            Zurück
+            {IconPlus}
           </button>
-          {/* Drawer-Card Style Title */}
-          <div
-            className={`drawer-slot drawer-detail-card ${isOpeningDrawerHeader ? 'opening' : ''} ${isClosingDrawerHeader ? 'closing' : ''}`}
-            style={{ marginBottom: 0, cursor: (isClosingDrawerHeader || isOpeningDrawerHeader) ? 'default' : 'pointer' }}
-            onClick={handleCloseToOverview}
-            role="button"
-            tabIndex={0}
-            aria-label="Fach schließen und zur Übersicht"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                handleCloseToOverview()
-              }
-            }}
-          >
-            <div className="drawer-rail">
-              <div className="drawer-body" style={{ minHeight: 48 }}>
-                <div className="drawer-handle-bar" />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
-                  <div className="drawer-color-strip" style={{ backgroundColor: drawer?.color, height: 28 }} />
-                  <h1 style={{
-                    margin: 0,
-                    fontSize: 20,
-                    fontWeight: 600,
-                    letterSpacing: -0.3,
-                    color: '#1C1C1E',
-                    fontFamily: "'Nunito', sans-serif",
-                  }}>
-                    {drawer?.name ?? 'Fach'}
-                  </h1>
-                </div>
-                {items && items.length > 0 && (
-                  <span className="item-count-badge">
-                    {items.length}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ paddingBottom: 80 }}>
-        <ItemList items={items ?? []} tags={tags ?? []} onEdit={handleEdit} />
-      </div>
-
-      <Fab
-        className="fixed right-4 bottom-6 z-20"
-        onClick={() => setSheetOpen(true)}
-        icon={
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
         }
       />
+
+      <div style={{ paddingLeft: 16, paddingRight: 16, paddingBottom: 'calc(16px + var(--sab))' }}>
+        <ItemList items={items ?? []} tags={tags ?? []} onEdit={handleEdit} />
+      </div>
 
       {drawerId && (
         <AddItemSheet

@@ -6,16 +6,54 @@
   --sar: env(safe-area-inset-right);
   --sab: env(safe-area-inset-bottom);
   --sal: env(safe-area-inset-left);
+
+  color-scheme: light dark;
+
+  /* iOS-like semantic tokens (light) */
+  --ft-bg: #f2f2f7;
+  --ft-surface-1: #ffffff;
+  --ft-surface-2: #f7f7f8;
+  --ft-separator: rgba(60, 60, 67, 0.29);
+  --ft-label: #000000;
+  --ft-secondary-label: rgba(60, 60, 67, 0.6);
+  --ft-tertiary-label: rgba(60, 60, 67, 0.3);
+  --ft-tertiary-fill: rgba(120, 120, 128, 0.12);
+
+  --ft-blue: #007aff;
+  --ft-red: #ff3b30;
+  --ft-orange: #ff9500;
 }
 
-html, body, #root {
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ft-bg: #000000;
+    --ft-surface-1: #1c1c1e;
+    --ft-surface-2: #2c2c2e;
+    --ft-separator: rgba(84, 84, 88, 0.65);
+    --ft-label: #ffffff;
+    --ft-secondary-label: rgba(235, 235, 245, 0.6);
+    --ft-tertiary-label: rgba(235, 235, 245, 0.3);
+    --ft-tertiary-fill: rgba(118, 118, 128, 0.24);
+  }
+}
+
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
-  overscroll-behavior: none;
-  -webkit-user-select: none;
-  user-select: none;
-  background-color: #F2F2F7;
+  background: var(--ft-bg);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 @media all and (display-mode: standalone) {
@@ -24,376 +62,106 @@ html, body, #root {
   }
 }
 
-/* === FREEZER CABINET (light design) === */
-.freezer-cabinet {
-  padding: 16px;
-}
-
-/* Outer shell — light silver/steel frame */
-.freezer-outer {
-  background: linear-gradient(180deg, #E5E7EB 0%, #D1D5DB 50%, #C9CDD3 100%);
-  border-radius: 20px;
-  padding: 3px;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-}
-
-/* Inner wall — frosty white/light blue */
-.freezer-inner {
-  background: linear-gradient(180deg, #EFF3F8 0%, #E4EAF1 100%);
-  border-radius: 18px;
-  padding: 10px;
-  position: relative;
-  overflow: hidden;
-}
-
-/* Freezer brand/logo strip */
-.freezer-brand {
-  display: flex;
+/* Reusable UI primitives */
+.ft-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 6px 0 8px;
-  color: #AEAEB2;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-}
-
-/* === DRAWER SLOT (realistic light plastic drawer) === */
-.drawer-slot {
-  position: relative;
+  padding: 0;
+  line-height: 0;
+  color: var(--ft-blue);
   cursor: pointer;
-  margin-bottom: 6px;
-  transition: transform 0.15s ease;
 }
 
-.drawer-slot:active {
-  transform: scale(0.98) translateY(2px);
+.ft-icon-btn:active {
+  opacity: 0.55;
 }
 
-.drawer-slot:last-child {
-  margin-bottom: 0;
+.ft-icon-btn:focus-visible {
+  outline: 2px solid var(--ft-blue);
+  outline-offset: 2px;
 }
 
-.drawer-slot.opening {
-  pointer-events: none;
-}
-
-.drawer-slot.opening .drawer-body-overview {
-  animation: drawer-open-overview-body 0.22s ease forwards;
-}
-
-.drawer-slot.opening .drawer-rail {
-  animation: drawer-open-overview-rail 0.22s ease forwards;
-}
-
-.drawer-slot.opening .drawer-handle-bar {
-  animation: drawer-open-overview-handle 0.22s ease forwards;
-}
-
-.drawer-detail-card {
-  outline: none;
-}
-
-.drawer-detail-card.opening {
-  pointer-events: none;
-}
-
-.drawer-detail-card.opening .drawer-body {
-  animation: drawer-open-body 0.28s ease forwards;
-}
-
-.drawer-detail-card.opening .drawer-rail {
-  animation: drawer-open-rail 0.28s ease forwards;
-}
-
-.drawer-detail-card.opening .drawer-handle-bar {
-  animation: drawer-open-handle 0.28s ease forwards;
-}
-
-.drawer-detail-card.closing {
-  pointer-events: none;
-}
-
-.drawer-detail-card.closing .drawer-body {
-  animation: drawer-close-body 0.28s ease forwards;
-}
-
-.drawer-detail-card.closing .drawer-rail {
-  animation: drawer-close-rail 0.28s ease forwards;
-}
-
-.drawer-detail-card.closing .drawer-handle-bar {
-  animation: drawer-close-handle 0.28s ease forwards;
-}
-
-@keyframes drawer-close-body {
-  0% {
-    transform: translateY(0) scaleY(1);
-    opacity: 1;
-    filter: brightness(1);
-  }
-  45% {
-    transform: translateY(2px) scaleY(0.94);
-    opacity: 0.95;
-  }
-  100% {
-    transform: translateY(-10px) scaleY(0.76);
-    opacity: 0.35;
-    filter: brightness(0.9);
-  }
-}
-
-@keyframes drawer-close-rail {
-  0% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scaleY(0.85);
-    opacity: 0.7;
-  }
-}
-
-@keyframes drawer-close-handle {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.35;
-  }
-}
-
-@keyframes drawer-open-overview-body {
-  0% {
-    transform: translateY(0) scaleY(1);
-    opacity: 1;
-    filter: brightness(1);
-  }
-  100% {
-    transform: translateY(8px) scaleY(1.08);
-    opacity: 0.96;
-    filter: brightness(1.05);
-  }
-}
-
-@keyframes drawer-open-overview-rail {
-  0% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scaleY(1.06);
-    opacity: 0.95;
-  }
-}
-
-@keyframes drawer-open-overview-handle {
-  0% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.8;
-  }
-}
-
-@keyframes drawer-open-body {
-  0% {
-    transform: translateY(-10px) scaleY(0.76);
-    opacity: 0.35;
-    filter: brightness(0.9);
-  }
-  55% {
-    transform: translateY(2px) scaleY(1.02);
-    opacity: 0.96;
-    filter: brightness(1.03);
-  }
-  100% {
-    transform: translateY(0) scaleY(1);
-    opacity: 1;
-    filter: brightness(1);
-  }
-}
-
-@keyframes drawer-open-rail {
-  0% {
-    transform: scaleY(0.85);
-    opacity: 0.7;
-  }
-  100% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-@keyframes drawer-open-handle {
-  0% {
-    opacity: 0.35;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-/* The rail/groove the drawer sits in */
-.drawer-rail {
-  background: linear-gradient(180deg, #D6DCE4 0%, #CDD3DB 100%);
-  border-radius: 10px;
-  padding: 4px 4px 5px;
-  box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.06),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.5);
-}
-
-/* The drawer body — frosted white translucent plastic */
-.drawer-body {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(245, 248, 255, 0.90) 50%,
-    rgba(240, 244, 250, 0.88) 100%
-  );
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-bottom-color: rgba(200, 210, 220, 0.4);
-  border-radius: 8px;
-  padding: 10px 12px;
-  min-height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-  transition: opacity 0.15s ease;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-
-.drawer-body:active {
-  opacity: 0.85;
-}
-
-/* Overview drawers are slightly larger and fixed-height */
-.drawer-body-overview {
-  min-height: 68px;
-}
-
-.drawer-body-overview .drawer-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.drawer-body-overview .drawer-preview {
-  min-height: 14px;
-}
-
-.drawer-slot-empty .drawer-body-overview {
-  opacity: 0.72;
-}
-
-/* Light frost shimmer on the drawer top edge */
-.drawer-body::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.9) 30%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.9) 70%, transparent 90%);
-}
-
-/* Handle bar — sits at the top center of the drawer front */
-.drawer-handle-bar {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 56px;
-  height: 4px;
-  background: linear-gradient(180deg, #C7CDD5 0%, #B8BFC8 100%);
-  border-radius: 0 0 3px 3px;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
-}
-
-/* Drawer label text */
-.drawer-label {
-  color: #1C1C1E;
-  font-size: 15px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Color indicator strip on the left */
-.drawer-color-strip {
-  width: 3px;
-  height: 24px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-/* Item count badge */
-.item-count-badge {
-  background: #F2F2F7;
-  color: #8E8E93;
-  border-radius: 12px;
+.ft-count-pill {
+  background: var(--ft-tertiary-fill);
+  color: var(--ft-secondary-label);
+  border-radius: 9999px;
   padding: 2px 10px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 18px;
 }
 
-/* Chevron arrow */
-.drawer-chevron {
-  opacity: 0.3;
-  margin-left: 4px;
-}
-
-/* Warning dot for expired items */
-.warning-dot {
+.ft-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
-  background: #FF3B30;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 2;
-  box-shadow: 0 0 6px rgba(255, 59, 48, 0.5);
+  border-radius: 9999px;
 }
 
-/* Items preview text inside drawer */
-.drawer-preview {
-  color: #AEAEB2;
-  font-size: 11px;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 180px;
+.ft-dot-danger {
+  background: var(--ft-red);
 }
 
-.expiry-warning {
-  color: #FF3B30;
+.ft-callout {
+  background: var(--ft-surface-1);
+  border: 1px solid var(--ft-separator);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.ft-callout-title {
   font-weight: 600;
+  font-size: 15px;
+  color: var(--ft-label);
 }
 
-.expiry-soon {
-  color: #FF9500;
-  font-weight: 600;
+.ft-callout-text {
+  margin: 6px 0 10px;
+  color: var(--ft-secondary-label);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.ft-expiry-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.ft-expiry-pill--quiet {
+  color: var(--ft-secondary-label);
+}
+
+.ft-expiry-pill--soon {
+  background: rgba(255, 149, 0, 0.14);
+  color: var(--ft-orange);
+}
+
+.ft-expiry-pill--expired {
+  background: rgba(255, 59, 48, 0.14);
+  color: var(--ft-red);
 }
 
 .tag-chip {
   display: inline-flex;
   align-items: center;
-  padding: 2px 10px;
-  border-radius: 12px;
+  padding: 3px 10px;
+  border-radius: 9999px;
   font-size: 12px;
-  font-weight: 500;
-  margin-right: 4px;
-  margin-top: 4px;
+  font-weight: 600;
+  margin-right: 6px;
+  margin-top: 6px;
+  user-select: none;
 }
 
 .empty-state {
@@ -402,12 +170,12 @@ html, body, #root {
   align-items: center;
   justify-content: center;
   padding: 48px 24px;
-  color: #8E8E93;
+  color: var(--ft-secondary-label);
   text-align: center;
 }
 
 .empty-state-icon {
-  font-size: 48px;
+  font-size: 44px;
   margin-bottom: 12px;
   opacity: 0.5;
 }
@@ -415,33 +183,16 @@ html, body, #root {
 .color-option {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: 9999px;
   cursor: pointer;
   border: 3px solid transparent;
   transition: border-color 0.2s;
 }
 
 .color-option.selected {
-  border-color: #007AFF;
+  border-color: var(--ft-blue);
 }
 
-/* (warning-dot moved to drawer section above) */
-
-/* Settings navbar opaque background */
 .settings-navbar {
-  background: #F2F2F7 !important;
-}
-
-.settings-icon-btn:focus-visible {
-  outline: 2px solid #007AFF !important;
-  outline-offset: 2px;
-}
-
-.settings-icon-btn {
-  -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.15s ease;
-}
-
-.settings-icon-btn:active {
-  opacity: 0.55;
+  background: var(--ft-bg) !important;
 }

@@ -9,12 +9,23 @@ export default function ExpiryBadge({ date }: ExpiryBadgeProps) {
   const expiringSoon = isExpiringSoon(date)
 
   if (!expired && !expiringSoon) {
-    return <span style={{ color: '#8E8E93', fontSize: 13 }}>MHD: {formatDateShort(date)}</span>
+    return (
+      <span className="ft-expiry-pill ft-expiry-pill--quiet">
+        MHD: {formatDateShort(date)}
+      </span>
+    )
   }
 
   return (
-    <span className={expired ? 'expiry-warning' : 'expiry-soon'} style={{ fontSize: 13 }}>
-      {expired ? '⚠️' : '⏰'} MHD: {formatDateShort(date)}
+    <span
+      className={
+        expired
+          ? 'ft-expiry-pill ft-expiry-pill--expired'
+          : 'ft-expiry-pill ft-expiry-pill--soon'
+      }
+      aria-label={expired ? 'MHD abgelaufen' : 'MHD bald fällig'}
+    >
+      MHD: {formatDateShort(date)}
     </span>
   )
 }

@@ -78,13 +78,13 @@ export default function ExpiryOverviewPage() {
       <div style={{ padding: '12px 16px 8px' }}>
         <div
           style={{
-            background: 'white',
+            background: 'var(--ft-surface-1)',
             borderRadius: 12,
             padding: 14,
-            border: '1px solid #E5E5EA',
+            border: '1px solid var(--ft-separator)',
           }}
         >
-          <p style={{ margin: '0 0 10px', fontSize: 13, color: '#8E8E93' }}>
+          <p style={{ margin: '0 0 10px', fontSize: 13, color: 'var(--ft-secondary-label)' }}>
             Filter lassen sich kombinieren.
           </p>
 
@@ -113,14 +113,16 @@ export default function ExpiryOverviewPage() {
               onChange={(e) => setExpiringDaysInput(e.target.value)}
               style={{
                 width: 72,
-                border: '1px solid #D1D1D6',
+                border: '1px solid var(--ft-separator)',
                 borderRadius: 8,
                 padding: '6px 8px',
                 fontSize: 14,
+                background: 'var(--ft-surface-1)',
+                color: 'var(--ft-label)',
               }}
               disabled={!includeExpiringSoon}
             />
-            <span style={{ fontSize: 14, color: '#8E8E93' }}>Tagen ab</span>
+            <span style={{ fontSize: 14, color: 'var(--ft-secondary-label)' }}>Tagen ab</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -139,19 +141,21 @@ export default function ExpiryOverviewPage() {
               onChange={(e) => setFrozenDaysInput(e.target.value)}
               style={{
                 width: 72,
-                border: '1px solid #D1D1D6',
+                border: '1px solid var(--ft-separator)',
                 borderRadius: 8,
                 padding: '6px 8px',
                 fontSize: 14,
+                background: 'var(--ft-surface-1)',
+                color: 'var(--ft-label)',
               }}
               disabled={!useFrozenDays}
             />
-            <span style={{ fontSize: 14, color: '#8E8E93' }}>Tagen gefroren</span>
+            <span style={{ fontSize: 14, color: 'var(--ft-secondary-label)' }}>Tagen gefroren</span>
           </div>
         </div>
       </div>
 
-      <div style={{ padding: '0 16px 8px', color: '#8E8E93', fontSize: 13 }}>
+      <div style={{ padding: '0 16px 8px', color: 'var(--ft-secondary-label)', fontSize: 13 }}>
         {filteredItems.length} Treffer
       </div>
 
@@ -162,18 +166,18 @@ export default function ExpiryOverviewPage() {
           subtitle="Passe die Filter an, um Ergebnisse zu sehen"
         />
       ) : (
-        <div style={{ margin: '0 16px 16px', borderRadius: 12, overflow: 'hidden', background: 'white' }}>
+        <div style={{ margin: '0 16px 16px', borderRadius: 12, overflow: 'hidden', background: 'var(--ft-surface-1)', border: '1px solid var(--ft-separator)' }}>
           {filteredItems.map(item => (
-            <div key={item.id} style={{ padding: '12px 14px', borderBottom: '1px solid #F2F2F7' }}>
+            <div key={item.id} style={{ padding: '12px 14px', borderBottom: '1px solid var(--ft-separator)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1C1C1E' }}>
+                  <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: 'var(--ft-label)' }}>
                     {item.name}
                   </p>
-                  <p style={{ margin: '4px 0 0', fontSize: 13, color: '#8E8E93' }}>
+                  <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--ft-secondary-label)' }}>
                     Fach: {drawerNameById.get(item.drawerId) ?? 'Unbekannt'}
                   </p>
-                  <p style={{ margin: '2px 0 0', fontSize: 13, color: '#8E8E93' }}>
+                  <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--ft-secondary-label)' }}>
                     Eingefroren seit: {formatDate(item.dateAdded)}
                   </p>
                   {item.expiryDate && (
@@ -182,7 +186,7 @@ export default function ExpiryOverviewPage() {
                     </div>
                   )}
                 </div>
-                <span style={{ fontSize: 14, color: '#8E8E93', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: 14, color: 'var(--ft-secondary-label)', whiteSpace: 'nowrap' }}>
                   {item.quantity} {item.unit}
                 </span>
               </div>

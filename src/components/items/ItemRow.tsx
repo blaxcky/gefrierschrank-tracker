@@ -78,7 +78,7 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
           top: 0,
           bottom: 0,
           width: 100,
-          background: '#007AFF',
+          background: 'var(--ft-blue)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -100,7 +100,7 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
           top: 0,
           bottom: 0,
           width: 100,
-          background: '#FF3B30',
+          background: 'var(--ft-red)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -119,9 +119,9 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: swiping ? 'none' : 'transform 0.3s ease',
-          background: expired ? '#FFF5F5' : 'white',
+          background: expired ? 'rgba(255, 59, 48, 0.06)' : 'var(--ft-surface-1)',
           padding: '12px 16px',
-          borderBottom: '1px solid #F2F2F7',
+          borderBottom: '1px solid var(--ft-separator)',
           position: 'relative',
           zIndex: 1,
         }}
@@ -132,11 +132,10 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {expired && <span style={{ fontSize: 14 }}>&#9888;&#65039;</span>}
-              <span style={{ fontSize: 16, fontWeight: 500 }}>{item.name}</span>
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ft-label)' }}>{item.name}</span>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 4 }}>
-              <span style={{ color: '#8E8E93', fontSize: 13 }}>
+              <span style={{ color: 'var(--ft-secondary-label)', fontSize: 13 }}>
                 {formatDate(item.dateAdded)}
               </span>
               {item.expiryDate && <ExpiryBadge date={item.expiryDate} />}
@@ -151,7 +150,7 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
                       backgroundColor: tag.color + '22',
                       color: tag.color,
                       fontSize: 11,
-                      padding: '1px 8px',
+                      padding: '2px 8px',
                     }}
                   >
                     {tag.name}
@@ -160,12 +159,12 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
               </div>
             )}
             {item.notes && (
-              <p style={{ color: '#AEAEB2', fontSize: 12, fontStyle: 'italic', margin: '4px 0 0' }}>
+              <p style={{ color: 'var(--ft-tertiary-label)', fontSize: 12, fontStyle: 'italic', margin: '4px 0 0' }}>
                 {item.notes}
               </p>
             )}
           </div>
-          <span style={{ color: '#8E8E93', fontSize: 14, whiteSpace: 'nowrap', marginLeft: 8 }}>
+          <span style={{ color: 'var(--ft-secondary-label)', fontSize: 14, whiteSpace: 'nowrap', marginLeft: 8 }}>
             {item.quantity} {item.unit}
           </span>
         </div>

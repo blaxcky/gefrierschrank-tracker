@@ -170,10 +170,11 @@ export default function SettingsPage() {
             after={
               <button
                 onClick={() => deleteTag(tag.id)}
+                type="button"
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#FF3B30',
+                  color: 'var(--ft-red)',
                   cursor: 'pointer',
                   fontSize: 14,
                 }}
@@ -192,11 +193,13 @@ export default function SettingsPage() {
               placeholder="Neuer Tag"
               style={{
                 flex: 1,
-                border: '1px solid #D1D1D6',
+                border: '1px solid var(--ft-separator)',
                 borderRadius: 8,
                 padding: '8px 12px',
                 fontSize: 14,
                 outline: 'none',
+                background: 'var(--ft-surface-1)',
+                color: 'var(--ft-label)',
               }}
             />
             <div style={{ display: 'flex', gap: 4 }}>
@@ -209,7 +212,7 @@ export default function SettingsPage() {
                     height: 24,
                     borderRadius: '50%',
                     backgroundColor: c,
-                    border: newTagColor === c ? '2px solid #000' : '2px solid transparent',
+                    border: newTagColor === c ? '3px solid var(--ft-blue)' : '3px solid transparent',
                     cursor: 'pointer',
                   }}
                 />
@@ -236,7 +239,7 @@ export default function SettingsPage() {
         />
         <ListItem
           link
-          title={<span style={{ color: '#FF3B30' }}>Alle Daten löschen</span>}
+          title={<span style={{ color: 'var(--ft-red)' }}>Alle Daten löschen</span>}
           onClick={() => setShowClearConfirm(true)}
         />
         {installPrompt && (
@@ -263,7 +266,7 @@ export default function SettingsPage() {
         style={{ display: 'none' }}
       />
 
-      <div style={{ textAlign: 'center', padding: '24px', color: '#AEAEB2', fontSize: 13 }}>
+      <div style={{ textAlign: 'center', padding: '24px', color: 'var(--ft-tertiary-label)', fontSize: 13 }}>
         Gefrierschrank Tracker v1.0
       </div>
 

@@ -71,13 +71,13 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
         style={{ height: 'auto', maxHeight: '70vh', overscrollBehavior: 'contain' }}
       >
         <div style={{ padding: '12px 16px 0' }}>
-          <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: '#D1D1D6', margin: '0 auto 12px' }} />
+          <div style={{ width: 36, height: 5, borderRadius: 3, backgroundColor: 'var(--ft-tertiary-fill)', margin: '0 auto 12px' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <button disabled={isSaving} onClick={onClose} style={{ color: isSaving ? '#AEAEB2' : '#007AFF', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
+            <button disabled={isSaving} onClick={onClose} type="button" style={{ color: isSaving ? 'var(--ft-tertiary-label)' : 'var(--ft-blue)', background: 'none', border: 'none', fontSize: 17, padding: '8px 0', minWidth: 80, textAlign: 'left' }}>
               Abbrechen
             </button>
             <span style={{ fontWeight: 600, fontSize: 17 }}>{editDrawer ? 'Fach bearbeiten' : 'Neues Fach'}</span>
-            <button disabled={isSaving} onClick={handleSave} style={{ color: isSaving ? '#AEAEB2' : '#007AFF', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
+            <button disabled={isSaving} onClick={handleSave} type="button" style={{ color: isSaving ? 'var(--ft-tertiary-label)' : 'var(--ft-blue)', background: 'none', border: 'none', fontSize: 17, fontWeight: 700, padding: '8px 0', minWidth: 80, textAlign: 'right' }}>
               {isSaving ? 'Speichert...' : 'Fertig'}
             </button>
           </div>
@@ -93,7 +93,7 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
           />
         </List>
         <div style={{ padding: '0 32px 16px' }}>
-          <p style={{ fontSize: 13, color: '#8E8E93', marginBottom: 8 }}>Farbe</p>
+          <p style={{ fontSize: 13, color: 'var(--ft-secondary-label)', marginBottom: 8 }}>Farbe</p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {DRAWER_COLORS.map((c) => (
               <div
@@ -111,7 +111,7 @@ export default function AddDrawerSheet({ opened, onClose, freezerId, editDrawer 
               large
               tonal
               onClick={() => setShowDeleteConfirm(true)}
-              style={{ color: '#FF3B30' }}
+              style={{ color: 'var(--ft-red)' }}
             >
               Fach löschen
             </Button>

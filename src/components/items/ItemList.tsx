@@ -41,7 +41,15 @@ export default function ItemList({ items, tags, onEdit }: ItemListProps) {
 
   return (
     <>
-      <div style={{ margin: '8px 0', borderRadius: 10, overflow: 'hidden', background: 'white' }}>
+      <div
+        style={{
+          margin: '12px 0',
+          borderRadius: 12,
+          overflow: 'hidden',
+          background: 'var(--ft-surface-1)',
+          border: '1px solid var(--ft-separator)',
+        }}
+      >
         {sorted.map((item) => (
           <ItemRow
             key={item.id}
