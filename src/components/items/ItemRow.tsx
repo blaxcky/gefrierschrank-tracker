@@ -17,6 +17,7 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
   const startX = useRef(0)
   const startY = useRef(0)
   const startOffset = useRef(0)
+  const suppressClickRef = useRef(false)
   const direction = useRef<'none' | 'horizontal' | 'vertical'>('none')
 
   const expired = useMemo(
@@ -33,6 +34,7 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
     startX.current = e.touches[0].clientX
     startY.current = e.touches[0].clientY
     startOffset.current = offsetX
+    suppressClickRef.current = false
     direction.current = 'none'
     setSwiping(true)
   }, [offsetX])
@@ -45,13 +47,14 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
     if (direction.current === 'none') {
       if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return
       direction.current = Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical'
+      suppressClickRef.current = true
     }
 
     if (direction.current === 'vertical') return
 
     e.preventDefault()
     const diff = dx + startOffset.current
-    setOffsetX(Math.max(-100, Math.min(100, diff)))
+    setOffsetX(Math.max(-100, Math.min(0, diff)))
   }, [swiping])
 
   const handleTouchEnd = useCallback(() => {
@@ -59,39 +62,30 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
     if (direction.current === 'horizontal' && offsetX < -60) {
       setOffsetX(0)
       onDelete(item.id)
-    } else if (direction.current === 'horizontal' && offsetX > 60) {
-      setOffsetX(0)
-      onEdit(item)
     } else {
       setOffsetX(0)
     }
     direction.current = 'none'
-  }, [offsetX, item, onDelete, onEdit])
+  }, [offsetX, item.id, onDelete])
+
+  const handleClick = useCallback(() => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false
+      return
+    }
+
+    onEdit(item)
+  }, [item, onEdit])
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onEdit(item)
+    }
+  }, [item, onEdit])
 
   return (
     <div style={{ position: 'relative', overflow: 'hidden' }}>
-      {/* Edit button behind (left side) */}
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: 100,
-          background: '#007AFF',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontWeight: 600,
-          fontSize: 14,
-          cursor: 'pointer',
-        }}
-        onClick={() => onEdit(item)}
-      >
-        Bearbeiten
-      </div>
-
       {/* Delete button behind (right side) */}
       <div
         style={{
@@ -125,9 +119,14 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
           position: 'relative',
           zIndex: 1,
         }}
+        role="button"
+        tabIndex={0}
+        aria-label={`${item.name} bearbeiten`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ flex: 1 }}>
