@@ -4,6 +4,7 @@ import { addItem, updateItem } from '../../hooks/useFreezerData'
 import type { Item } from '../../db/database'
 import TagPicker from './TagPicker'
 import { lockBodyScroll, unlockBodyScroll } from '../../utils/scrollLock'
+import { toInputDateString } from '../../utils/dates'
 
 interface AddItemSheetProps {
   opened: boolean
@@ -33,7 +34,7 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
         setUnit(editItem.unit)
         setTags(editItem.tags)
         setNotes(editItem.notes)
-        setExpiryDate(editItem.expiryDate ? editItem.expiryDate.toISOString().split('T')[0] : '')
+        setExpiryDate(editItem.expiryDate ? toInputDateString(editItem.expiryDate) : '')
       } else {
         setName('')
         setQuantity('1')
@@ -154,6 +155,25 @@ export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSa
           label="MHD (optional)"
           floatingLabel
         />
+        {expiryDate && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 16px 12px' }}>
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => setExpiryDate('')}
+              style={{
+                color: isSaving ? '#AEAEB2' : '#007AFF',
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              MHD entfernen
+            </button>
+          </div>
+        )}
       </List>
 
       <div style={{ padding: '0 24px' }}>
