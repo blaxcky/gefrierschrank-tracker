@@ -17,7 +17,6 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
 
   const items = stats?.items ?? []
   const itemCount = stats?.itemCount ?? 0
-  const expiredCount = stats?.expiredCount ?? 0
 
   const handlePointerDown = () => {
     longPressTimer.current = setTimeout(() => {
@@ -51,7 +50,6 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
     }
   }, [])
 
-  // Preview: show first few item names
   const previewText = items
     .slice(0, 3)
     .map(i => i.name)
@@ -69,13 +67,8 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
     >
       <div className="drawer-rail">
         <div className="drawer-body drawer-body-overview">
-          {/* Handle bar */}
           <div className="drawer-handle-bar" />
 
-          {/* Warning dot for expired items */}
-          {expiredCount > 0 && <div className="warning-dot" />}
-
-          {/* Left side: color strip + label */}
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: 0 }}>
             <div className="drawer-color-strip" style={{ backgroundColor: drawer.color }} />
             <div style={{ minWidth: 0, flex: 1 }}>
@@ -88,7 +81,6 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
             </div>
           </div>
 
-          {/* Right side: count + chevron */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             <span className="item-count-badge">
               {itemCount}

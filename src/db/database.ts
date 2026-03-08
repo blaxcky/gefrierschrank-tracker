@@ -25,7 +25,6 @@ export interface Item {
   tags: string[]
   notes: string
   dateAdded: Date
-  expiryDate?: Date
 }
 
 export interface Tag {
@@ -46,6 +45,17 @@ db.version(1).stores({
   drawers: 'id, freezerId, order',
   items: 'id, drawerId, *tags, dateAdded, expiryDate',
   tags: 'id, &name',
+})
+
+db.version(2).stores({
+  freezers: 'id, order',
+  drawers: 'id, freezerId, order',
+  items: 'id, drawerId, *tags, dateAdded',
+  tags: 'id, &name',
+}).upgrade(async (tx) => {
+  await tx.table('items').toCollection().modify((item: Item & { expiryDate?: Date }) => {
+    delete item.expiryDate
+  })
 })
 
 export { db }

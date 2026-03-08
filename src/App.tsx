@@ -3,7 +3,7 @@ import { App as KonstaApp } from 'konsta/react'
 import FreezerViewPage from './pages/FreezerViewPage'
 import DrawerViewPage from './pages/DrawerViewPage'
 import SettingsPage from './pages/SettingsPage'
-import ExpiryOverviewPage from './pages/ExpiryOverviewPage'
+import FrozenDurationPage from './pages/ExpiryOverviewPage'
 
 function App() {
   return (
@@ -12,7 +12,7 @@ function App() {
         <Routes>
           <Route path="/" element={<FreezerViewPage />} />
           <Route path="/drawer/:drawerId" element={<DrawerViewPage />} />
-          <Route path="/ablauf-check" element={<ExpiryOverviewPage />} />
+          <Route path="/lagerdauer" element={<FrozenDurationPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </HashRouter>

@@ -1,4 +1,4 @@
-import { db } from '../db/database'
+import { db, type Item } from '../db/database'
 
 const LAST_EXPORT_AT_KEY = 'gefrierschrank:last-export-at'
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -32,10 +32,15 @@ export async function importData(jsonString: string): Promise<void> {
     if (data.freezers) await db.freezers.bulkAdd(data.freezers)
     if (data.drawers) await db.drawers.bulkAdd(data.drawers)
     if (data.items) {
-      const items = data.items.map((item: Record<string, unknown>) => ({
-        ...item,
+      const items: Item[] = data.items.map((item: Record<string, unknown>) => ({
+        id: item.id as string,
+        drawerId: item.drawerId as string,
+        name: item.name as string,
+        quantity: item.quantity as number,
+        unit: item.unit as string,
+        tags: Array.isArray(item.tags) ? item.tags as string[] : [],
+        notes: typeof item.notes === 'string' ? item.notes : '',
         dateAdded: new Date(item.dateAdded as string),
-        expiryDate: item.expiryDate ? new Date(item.expiryDate as string) : undefined,
       }))
       await db.items.bulkAdd(items)
     }

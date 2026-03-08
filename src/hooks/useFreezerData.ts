@@ -47,12 +47,9 @@ export function useItemsByFreezer(freezerId: string | undefined) {
 export function useDrawerStats(drawerId: string) {
   return useLiveQuery(async () => {
     const items = await db.items.where('drawerId').equals(drawerId).toArray()
-    const now = new Date()
-    now.setHours(0, 0, 0, 0)
     return {
       items,
       itemCount: items.length,
-      expiredCount: items.filter(i => i.expiryDate && i.expiryDate < now).length,
     }
   }, [drawerId])
 }
@@ -111,7 +108,6 @@ export async function addItem(
   unit: string,
   tags: string[],
   notes: string,
-  expiryDate?: Date,
 ): Promise<Item> {
   const item: Item = {
     id: crypto.randomUUID(),
@@ -122,7 +118,6 @@ export async function addItem(
     tags,
     notes,
     dateAdded: new Date(),
-    expiryDate,
   }
   await db.items.add(item)
   return item

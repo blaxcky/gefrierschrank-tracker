@@ -4,7 +4,6 @@ import { deleteItem } from '../../hooks/useFreezerData'
 import ItemRow from './ItemRow'
 import EmptyState from '../common/EmptyState'
 import ConfirmDialog from '../common/ConfirmDialog'
-import { isExpired } from '../../utils/dates'
 
 interface ItemListProps {
   items: Item[]
@@ -25,12 +24,7 @@ export default function ItemList({ items, tags, onEdit }: ItemListProps) {
     )
   }
 
-  const sorted = [...items].sort((a, b) => {
-    const aExpired = a.expiryDate && isExpired(a.expiryDate) ? 0 : 1
-    const bExpired = b.expiryDate && isExpired(b.expiryDate) ? 0 : 1
-    if (aExpired !== bExpired) return aExpired - bExpired
-    return b.dateAdded.getTime() - a.dateAdded.getTime()
-  })
+  const sorted = [...items].sort((a, b) => a.dateAdded.getTime() - b.dateAdded.getTime())
 
   const handleDelete = async () => {
     if (deleteTarget) {

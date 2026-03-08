@@ -1,8 +1,7 @@
 import { useState, useRef, useMemo, useCallback, memo } from 'react'
 import type { Item, Tag } from '../../db/database'
-import ExpiryBadge from '../common/ExpiryBadge'
+import FrozenDurationBadge from '../common/FrozenDurationBadge'
 import { formatDate } from '../../utils/dates'
-import { isExpired } from '../../utils/dates'
 
 interface ItemRowProps {
   item: Item
@@ -19,11 +18,6 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
   const startOffset = useRef(0)
   const suppressClickRef = useRef(false)
   const direction = useRef<'none' | 'horizontal' | 'vertical'>('none')
-
-  const expired = useMemo(
-    () => item.expiryDate ? isExpired(item.expiryDate) : false,
-    [item.expiryDate]
-  )
 
   const tagObjects = useMemo(
     () => tags.filter(t => item.tags.includes(t.name)),
@@ -86,7 +80,6 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
 
   return (
     <div style={{ position: 'relative', overflow: 'hidden' }}>
-      {/* Delete button behind (right side) */}
       <div
         style={{
           position: 'absolute',
@@ -108,12 +101,11 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
         Löschen
       </div>
 
-      {/* Item content */}
       <div
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: swiping ? 'none' : 'transform 0.3s ease',
-          background: expired ? '#FFF5F5' : 'white',
+          background: 'white',
           padding: '12px 16px',
           borderBottom: '1px solid #F2F2F7',
           position: 'relative',
@@ -131,14 +123,13 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              {expired && <span style={{ fontSize: 14 }}>&#9888;&#65039;</span>}
               <span style={{ fontSize: 16, fontWeight: 500 }}>{item.name}</span>
             </div>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 4 }}>
               <span style={{ color: '#8E8E93', fontSize: 13 }}>
-                {formatDate(item.dateAdded)}
+                Eingefroren: {formatDate(item.dateAdded)}
               </span>
-              {item.expiryDate && <ExpiryBadge date={item.expiryDate} />}
+              <FrozenDurationBadge date={item.dateAdded} />
             </div>
             {tagObjects.length > 0 && (
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>

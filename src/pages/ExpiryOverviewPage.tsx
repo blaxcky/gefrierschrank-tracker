@@ -3,31 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { Page, Navbar, NavbarBackLink } from 'konsta/react'
 import { useFirstFreezer, useDrawers, useItemsByFreezer } from '../hooks/useFreezerData'
 import EmptyState from '../components/common/EmptyState'
-import ExpiryBadge from '../components/common/ExpiryBadge'
-import { formatDate } from '../utils/dates'
+import FrozenDurationBadge from '../components/common/FrozenDurationBadge'
+import { formatDate, getFrozenDays } from '../utils/dates'
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
-function toStartOfDay(date: Date): Date {
-  const d = new Date(date)
-  d.setHours(0, 0, 0, 0)
-  return d
-}
-
-export default function ExpiryOverviewPage() {
+export default function FrozenDurationPage() {
   const navigate = useNavigate()
   const freezer = useFirstFreezer()
   const drawers = useDrawers(freezer?.id)
   const items = useItemsByFreezer(freezer?.id)
 
-  const [includeExpired, setIncludeExpired] = useState(true)
-  const [includeExpiringSoon, setIncludeExpiringSoon] = useState(false)
-  const [expiringDaysInput, setExpiringDaysInput] = useState('7')
-  const [useFrozenDays, setUseFrozenDays] = useState(false)
-  const [frozenDaysInput, setFrozenDaysInput] = useState('30')
-
-  const expiringDays = Math.max(0, parseInt(expiringDaysInput, 10) || 0)
-  const frozenDays = Math.max(0, parseInt(frozenDaysInput, 10) || 0)
+  const [minimumDaysInput, setMinimumDaysInput] = useState('30')
+  const minimumDays = Math.max(0, parseInt(minimumDaysInput, 10) || 0)
 
   const drawerNameById = useMemo(() => {
     const map = new Map<string, string>()
@@ -39,39 +25,16 @@ export default function ExpiryOverviewPage() {
 
   const filteredItems = useMemo(() => {
     const allItems = items ?? []
-    const today = toStartOfDay(new Date())
-    const expiryThreshold = new Date(today)
-    expiryThreshold.setDate(expiryThreshold.getDate() + expiringDays)
-    const hasAnyFilter = includeExpired || includeExpiringSoon || useFrozenDays
 
     return allItems
-      .filter(item => {
-        if (!hasAnyFilter) return true
-
-        const expiry = item.expiryDate
-        const matchesExpired = Boolean(includeExpired && expiry && expiry < today)
-        const matchesExpiringSoon = Boolean(
-          includeExpiringSoon && expiry && expiry >= today && expiry <= expiryThreshold
-        )
-        const ageInDays = Math.floor((today.getTime() - toStartOfDay(item.dateAdded).getTime()) / DAY_MS)
-        const matchesFrozenDays = useFrozenDays && ageInDays >= frozenDays
-
-        return matchesExpired || matchesExpiringSoon || matchesFrozenDays
-      })
-      .sort((a, b) => {
-        if (a.expiryDate && b.expiryDate) {
-          return a.expiryDate.getTime() - b.expiryDate.getTime()
-        }
-        if (a.expiryDate) return -1
-        if (b.expiryDate) return 1
-        return a.dateAdded.getTime() - b.dateAdded.getTime()
-      })
-  }, [items, includeExpired, includeExpiringSoon, expiringDays, useFrozenDays, frozenDays])
+      .filter(item => getFrozenDays(item.dateAdded) >= minimumDays)
+      .sort((a, b) => a.dateAdded.getTime() - b.dateAdded.getTime())
+  }, [items, minimumDays])
 
   return (
     <Page>
       <Navbar
-        title="Ablauf-Check"
+        title="Lagerdauer"
         left={<NavbarBackLink onClick={() => navigate('/')} text="Zurück" />}
       />
 
@@ -85,58 +48,18 @@ export default function ExpiryOverviewPage() {
           }}
         >
           <p style={{ margin: '0 0 10px', fontSize: 13, color: '#8E8E93' }}>
-            Filter lassen sich kombinieren.
+            Zeigt alle Artikel, die seit mindestens der gewählten Anzahl an Tagen eingefroren sind.
           </p>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <input
-              type="checkbox"
-              checked={includeExpired}
-              onChange={(e) => setIncludeExpired(e.target.checked)}
-            />
-            <span style={{ fontSize: 14 }}>Abgelaufene Artikel anzeigen</span>
-          </label>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-              <input
-                type="checkbox"
-                checked={includeExpiringSoon}
-                onChange={(e) => setIncludeExpiringSoon(e.target.checked)}
-              />
-              <span style={{ fontSize: 14 }}>Läuft in den nächsten</span>
-            </label>
-            <input
-              type="number"
-              min={0}
-              value={expiringDaysInput}
-              onChange={(e) => setExpiringDaysInput(e.target.value)}
-              style={{
-                width: 72,
-                border: '1px solid #D1D1D6',
-                borderRadius: 8,
-                padding: '6px 8px',
-                fontSize: 14,
-              }}
-              disabled={!includeExpiringSoon}
-            />
-            <span style={{ fontSize: 14, color: '#8E8E93' }}>Tagen ab</span>
-          </div>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-              <input
-                type="checkbox"
-                checked={useFrozenDays}
-                onChange={(e) => setUseFrozenDays(e.target.checked)}
-              />
-              <span style={{ fontSize: 14 }}>Seit mindestens</span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, fontSize: 14 }}>
+              Seit mindestens
             </label>
             <input
               type="number"
               min={0}
-              value={frozenDaysInput}
-              onChange={(e) => setFrozenDaysInput(e.target.value)}
+              value={minimumDaysInput}
+              onChange={(e) => setMinimumDaysInput(e.target.value)}
               style={{
                 width: 72,
                 border: '1px solid #D1D1D6',
@@ -144,9 +67,8 @@ export default function ExpiryOverviewPage() {
                 padding: '6px 8px',
                 fontSize: 14,
               }}
-              disabled={!useFrozenDays}
             />
-            <span style={{ fontSize: 14, color: '#8E8E93' }}>Tagen gefroren</span>
+            <span style={{ fontSize: 14, color: '#8E8E93' }}>Tagen eingefroren</span>
           </div>
         </div>
       </div>
@@ -159,7 +81,7 @@ export default function ExpiryOverviewPage() {
         <EmptyState
           icon="&#128269;"
           title="Keine passenden Artikel"
-          subtitle="Passe die Filter an, um Ergebnisse zu sehen"
+          subtitle="Reduziere die Mindestdauer, um mehr Ergebnisse zu sehen"
         />
       ) : (
         <div style={{ margin: '0 16px 16px', borderRadius: 12, overflow: 'hidden', background: 'white' }}>
@@ -176,11 +98,9 @@ export default function ExpiryOverviewPage() {
                   <p style={{ margin: '2px 0 0', fontSize: 13, color: '#8E8E93' }}>
                     Eingefroren seit: {formatDate(item.dateAdded)}
                   </p>
-                  {item.expiryDate && (
-                    <div style={{ marginTop: 2 }}>
-                      <ExpiryBadge date={item.expiryDate} />
-                    </div>
-                  )}
+                  <div style={{ marginTop: 6 }}>
+                    <FrozenDurationBadge date={item.dateAdded} />
+                  </div>
                 </div>
                 <span style={{ fontSize: 14, color: '#8E8E93', whiteSpace: 'nowrap' }}>
                   {item.quantity} {item.unit}

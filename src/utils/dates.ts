@@ -6,30 +6,22 @@ export function formatDate(date: Date): string {
   }).format(date)
 }
 
-export function formatDateShort(date: Date): string {
-  return new Intl.DateTimeFormat('de-DE', {
-    day: '2-digit',
-    month: '2-digit',
-  }).format(date)
+export function toStartOfDay(date: Date): Date {
+  const normalized = new Date(date)
+  normalized.setHours(0, 0, 0, 0)
+  return normalized
 }
 
-export function isExpired(date: Date): boolean {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  return date < today
+export function getFrozenDays(date: Date, now = new Date()): number {
+  const start = toStartOfDay(date)
+  const today = toStartOfDay(now)
+  const diff = today.getTime() - start.getTime()
+  return Math.max(0, Math.floor(diff / (24 * 60 * 60 * 1000)))
 }
 
-export function isExpiringSoon(date: Date, daysThreshold = 7): boolean {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const threshold = new Date(today)
-  threshold.setDate(threshold.getDate() + daysThreshold)
-  return date >= today && date <= threshold
-}
-
-export function toInputDateString(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+export function formatFrozenDuration(date: Date, now = new Date()): string {
+  const days = getFrozenDays(date, now)
+  if (days === 0) return 'heute eingefroren'
+  if (days === 1) return 'seit 1 Tag eingefroren'
+  return `seit ${days} Tagen eingefroren`
 }

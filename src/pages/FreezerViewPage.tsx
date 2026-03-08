@@ -103,7 +103,7 @@ export default function FreezerViewPage() {
 
         <div style={{ margin: '12px 10px 2px', textAlign: 'center' }}>
           <button
-            onClick={() => navigate('/ablauf-check')}
+            onClick={() => navigate('/lagerdauer')}
             style={{
               background: 'none',
               border: 'none',
@@ -114,7 +114,7 @@ export default function FreezerViewPage() {
               padding: '6px 8px',
             }}
           >
-            Ablauf-Check öffnen
+            Lagerdauer öffnen
           </button>
         </div>
       </FreezerBody>
