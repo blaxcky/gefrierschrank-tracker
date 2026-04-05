@@ -39,9 +39,9 @@ html, body, #root {
 
 /* Inner wall — frosty white/light blue */
 .freezer-inner {
-  background: linear-gradient(180deg, #EFF3F8 0%, #E4EAF1 100%);
+  background: linear-gradient(180deg, #EBF0F7 0%, #E0E8F0 100%);
   border-radius: 18px;
-  padding: 10px;
+  padding: 12px;
   position: relative;
   overflow: hidden;
 }
@@ -60,11 +60,11 @@ html, body, #root {
   text-transform: uppercase;
 }
 
-/* === DRAWER SLOT (realistic light plastic drawer) === */
+/* === DRAWER SLOT (3D translucent plastic drawer) === */
 .drawer-slot {
   position: relative;
   cursor: pointer;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
   transition: transform 0.15s ease;
 }
 
@@ -88,8 +88,53 @@ html, body, #root {
   animation: drawer-open-overview-rail 0.22s ease forwards;
 }
 
-.drawer-slot.opening .drawer-handle-bar {
-  animation: drawer-open-overview-handle 0.22s ease forwards;
+.drawer-slot.opening .drawer-top-face {
+  animation: drawer-open-overview-top 0.22s ease forwards;
+}
+
+/* === 3D Top Face (visible from above) === */
+.drawer-top-face {
+  position: relative;
+  height: 28px;
+  background: linear-gradient(
+    180deg,
+    rgba(185, 205, 230, 0.45) 0%,
+    rgba(195, 215, 238, 0.50) 40%,
+    rgba(205, 222, 242, 0.55) 100%
+  );
+  border-radius: 14px 14px 0 0;
+  border: 1px solid rgba(200, 220, 242, 0.35);
+  border-bottom: none;
+  transform: perspective(600px) rotateX(5deg);
+  transform-origin: bottom center;
+  box-shadow:
+    inset 0 3px 8px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 3px rgba(130, 160, 200, 0.06);
+  overflow: hidden;
+}
+
+/* Frost shimmer on top edge */
+.drawer-top-face::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+}
+
+/* Handle groove on top face */
+.drawer-top-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 52px;
+  height: 5px;
+  background: linear-gradient(180deg, rgba(160, 185, 212, 0.35), rgba(150, 175, 205, 0.45));
+  border-radius: 3px;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
 .drawer-detail-card {
@@ -189,12 +234,14 @@ html, body, #root {
   }
 }
 
-@keyframes drawer-open-overview-handle {
+@keyframes drawer-open-overview-top {
   0% {
+    transform: perspective(600px) rotateX(5deg) scaleY(1);
     opacity: 1;
   }
   100% {
-    opacity: 0.8;
+    transform: perspective(600px) rotateX(2deg) scaleY(1.08);
+    opacity: 0.92;
   }
 }
 
@@ -236,28 +283,38 @@ html, body, #root {
   }
 }
 
-/* The rail/groove the drawer sits in */
+/* The rail — wraps the drawer front face */
 .drawer-rail {
-  background: linear-gradient(180deg, #D6DCE4 0%, #CDD3DB 100%);
-  border-radius: 10px;
-  padding: 4px 4px 5px;
+  background: linear-gradient(
+    180deg,
+    rgba(195, 215, 238, 0.30) 0%,
+    rgba(185, 208, 232, 0.25) 100%
+  );
+  border-radius: 0 0 14px 14px;
+  padding: 0 3px 4px;
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.06),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+    0 6px 20px rgba(80, 115, 160, 0.10),
+    0 2px 6px rgba(80, 115, 160, 0.05);
 }
 
-/* The drawer body — frosted white translucent plastic */
+/* Detail card keeps rounded top corners on the rail */
+.drawer-detail-card .drawer-rail {
+  border-radius: 10px;
+  padding: 4px 4px 5px;
+}
+
+/* The drawer body — translucent frosted blue plastic */
 .drawer-body {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(245, 248, 255, 0.90) 50%,
-    rgba(240, 244, 250, 0.88) 100%
+    rgba(210, 225, 245, 0.70) 0%,
+    rgba(200, 218, 240, 0.62) 40%,
+    rgba(192, 212, 236, 0.56) 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-bottom-color: rgba(200, 210, 220, 0.4);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border: 1px solid rgba(215, 230, 250, 0.45);
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 14px 16px;
   min-height: 56px;
   display: flex;
   align-items: center;
@@ -266,17 +323,24 @@ html, body, #root {
   overflow: hidden;
   transition: opacity 0.15s ease;
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -3px 8px rgba(100, 140, 185, 0.04);
+}
+
+/* Detail card has full rounded corners on body */
+.drawer-detail-card .drawer-body {
+  border-radius: 8px;
+  border-top: 1px solid rgba(215, 230, 250, 0.45);
 }
 
 .drawer-body:active {
   opacity: 0.85;
 }
 
-/* Overview drawers are slightly larger and fixed-height */
+/* Overview drawers are taller for the preview content */
 .drawer-body-overview {
-  min-height: 68px;
+  min-height: 76px;
+  padding: 16px 18px;
 }
 
 .drawer-body-overview .drawer-label {
@@ -286,45 +350,63 @@ html, body, #root {
 }
 
 .drawer-body-overview .drawer-preview {
-  min-height: 14px;
+  min-height: 16px;
 }
 
 .drawer-slot-empty .drawer-body-overview {
-  opacity: 0.72;
+  opacity: 0.75;
 }
 
-/* Light frost shimmer on the drawer top edge */
+/* Frost shimmer on the drawer body top edge */
 .drawer-body::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  left: 5%;
+  right: 5%;
   height: 1px;
-  background: linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.9) 30%, rgba(255,255,255,1) 50%, rgba(255,255,255,0.9) 70%, transparent 90%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
 }
 
-/* Handle bar — sits at the top center of the drawer front */
+/* Handle bar — subtle groove on front face */
 .drawer-handle-bar {
   position: absolute;
-  top: 0;
+  bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
+  width: 64px;
+  height: 5px;
+  background: linear-gradient(180deg, rgba(165, 190, 216, 0.30), rgba(155, 180, 210, 0.38));
+  border-radius: 3px;
+  box-shadow:
+    inset 0 1px 1px rgba(0, 0, 0, 0.04),
+    0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+/* Detail card handle stays at top */
+.drawer-detail-card .drawer-handle-bar {
+  top: 0;
+  bottom: auto;
   width: 56px;
   height: 4px;
-  background: linear-gradient(180deg, #C7CDD5 0%, #B8BFC8 100%);
+  background: linear-gradient(180deg, rgba(165, 190, 216, 0.40), rgba(155, 180, 210, 0.50));
   border-radius: 0 0 3px 3px;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.06);
 }
 
 /* Drawer label text */
 .drawer-label {
   color: #1C1C1E;
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 20px;
+  font-weight: 700;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+/* Detail card keeps the original label size */
+.drawer-detail-card .drawer-label {
+  font-size: 15px;
+  font-weight: 500;
 }
 
 /* Color indicator strip on the left */
@@ -335,31 +417,40 @@ html, body, #root {
   flex-shrink: 0;
 }
 
-/* Item count badge */
+/* Item count — large number (not a badge in overview) */
 .item-count-badge {
-  background: #F2F2F7;
-  color: #8E8E93;
+  color: #3A3A3C;
+  font-size: 22px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+
+/* Detail card keeps the badge style */
+.drawer-detail-card .item-count-badge {
+  background: rgba(220, 230, 245, 0.5);
   border-radius: 12px;
   padding: 2px 10px;
   font-size: 13px;
   font-weight: 500;
+  color: #8E8E93;
 }
 
 /* Chevron arrow */
 .drawer-chevron {
-  opacity: 0.3;
-  margin-left: 4px;
+  opacity: 0.35;
+  margin-left: 2px;
 }
 
 /* Items preview text inside drawer */
 .drawer-preview {
-  color: #AEAEB2;
-  font-size: 11px;
-  margin-top: 2px;
+  color: #8E8E93;
+  font-size: 13px;
+  margin-top: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px;
+  max-width: 200px;
 }
 
 .tag-chip {

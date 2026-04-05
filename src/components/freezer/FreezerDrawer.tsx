@@ -65,28 +65,30 @@ export default function FreezerDrawer({ drawer, onLongPress }: FreezerDrawerProp
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
     >
+      {/* 3D top face — visible from above */}
+      <div className="drawer-top-face">
+        <div className="drawer-top-handle" />
+      </div>
+
       <div className="drawer-rail">
         <div className="drawer-body drawer-body-overview">
           <div className="drawer-handle-bar" />
 
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, flex: 1, minWidth: 0 }}>
-            <div className="drawer-color-strip" style={{ backgroundColor: drawer.color }} />
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div className="drawer-label">
-                {drawer.name}
-              </div>
-              <div className="drawer-preview">
-                {previewDisplay || '\u00A0'}
-              </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="drawer-label">
+              {drawer.name}
+            </div>
+            <div className="drawer-preview">
+              {isEmpty ? 'Leer' : (previewDisplay || '\u00A0')}
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
             <span className="item-count-badge">
               {itemCount}
             </span>
-            <svg className="drawer-chevron" width="7" height="12" viewBox="0 0 7 12" fill="none">
-              <path d="M1 1L6 6L1 11" stroke="#C7C7CC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <svg className="drawer-chevron" width="8" height="14" viewBox="0 0 8 14" fill="none">
+              <path d="M1 1L7 7L1 13" stroke="#8E8E93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         </div>
