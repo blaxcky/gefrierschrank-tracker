@@ -113,99 +113,114 @@ export default function RemoveQuantitySheet({ opened, onClose, item }: RemoveQua
             </p>
           </div>
 
-          {/* Stepper */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 20,
-            marginBottom: 16,
-          }}>
-            <button
-              onClick={handleDecrement}
-              disabled={removeCount <= 1}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                border: '1.5px solid #D1D1D6',
-                background: 'white',
-                fontSize: 24,
-                fontWeight: 600,
-                color: removeCount <= 1 ? '#D1D1D6' : '#007AFF',
-                cursor: removeCount <= 1 ? 'default' : 'pointer',
+          {maxCount > 1 ? (
+            <>
+              {/* Stepper */}
+              <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}
-              aria-label="Weniger entnehmen"
-            >
-              −
-            </button>
+                gap: 20,
+                marginBottom: 16,
+              }}>
+                <button
+                  onClick={handleDecrement}
+                  disabled={removeCount <= 1}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    border: '1.5px solid #D1D1D6',
+                    background: 'white',
+                    fontSize: 24,
+                    fontWeight: 600,
+                    color: removeCount <= 1 ? '#D1D1D6' : '#007AFF',
+                    cursor: removeCount <= 1 ? 'default' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  aria-label="Weniger entnehmen"
+                >
+                  −
+                </button>
 
-            <div style={{ textAlign: 'center', minWidth: 80 }}>
-              <span style={{ fontSize: 36, fontWeight: 700, color: '#1C1C1E' }}>
-                {removeCount}
-              </span>
-              <p style={{ fontSize: 13, color: '#8E8E93', margin: '2px 0 0' }}>
-                {item.unit} entnehmen
+                <div style={{ textAlign: 'center', minWidth: 80 }}>
+                  <span style={{ fontSize: 36, fontWeight: 700, color: '#1C1C1E' }}>
+                    {removeCount}
+                  </span>
+                  <p style={{ fontSize: 13, color: '#8E8E93', margin: '2px 0 0' }}>
+                    {item.unit} entnehmen
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleIncrement}
+                  disabled={removeCount >= maxCount}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    border: '1.5px solid #D1D1D6',
+                    background: 'white',
+                    fontSize: 24,
+                    fontWeight: 600,
+                    color: removeCount >= maxCount ? '#D1D1D6' : '#007AFF',
+                    cursor: removeCount >= maxCount ? 'default' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  aria-label="Mehr entnehmen"
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Remaining info */}
+              <p style={{
+                textAlign: 'center',
+                fontSize: 14,
+                color: remaining === 0 ? '#FF3B30' : '#8E8E93',
+                fontWeight: remaining === 0 ? 600 : 400,
+                marginBottom: 20,
+              }}>
+                {remaining === 0
+                  ? 'Alle entnommen – Artikel wird gelöscht'
+                  : `Verbleibend: ${remaining} ${item.unit}`
+                }
               </p>
-            </div>
 
-            <button
-              onClick={handleIncrement}
-              disabled={removeCount >= maxCount}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                border: '1.5px solid #D1D1D6',
-                background: 'white',
-                fontSize: 24,
-                fontWeight: 600,
-                color: removeCount >= maxCount ? '#D1D1D6' : '#007AFF',
-                cursor: removeCount >= maxCount ? 'default' : 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              aria-label="Mehr entnehmen"
-            >
-              +
-            </button>
-          </div>
-
-          {/* Remaining info */}
-          <p style={{
-            textAlign: 'center',
-            fontSize: 14,
-            color: remaining === 0 ? '#FF3B30' : '#8E8E93',
-            fontWeight: remaining === 0 ? 600 : 400,
-            marginBottom: 20,
-          }}>
-            {remaining === 0
-              ? 'Alle entnommen – Artikel wird gelöscht'
-              : `Verbleibend: ${remaining} ${item.unit}`
-            }
-          </p>
-
-          {/* Quick action: remove all */}
-          {maxCount > 1 && removeCount < maxCount && (
-            <div style={{ textAlign: 'center', marginBottom: 16 }}>
-              <button
-                onClick={handleRemoveAll}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#007AFF',
-                  fontSize: 15,
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                }}
-              >
-                Alle entnehmen
-              </button>
-            </div>
+              {/* Quick action: remove all */}
+              {removeCount < maxCount && (
+                <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                  <button
+                    onClick={handleRemoveAll}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#007AFF',
+                      fontSize: 15,
+                      cursor: 'pointer',
+                      padding: '4px 8px',
+                    }}
+                  >
+                    Alle entnehmen
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            /* Single item: no stepper needed */
+            <p style={{
+              textAlign: 'center',
+              fontSize: 15,
+              color: '#FF3B30',
+              fontWeight: 600,
+              marginBottom: 20,
+            }}>
+              Letztes Stück – Artikel wird gelöscht
+            </p>
           )}
 
           {/* Confirm button */}
@@ -220,9 +235,11 @@ export default function RemoveQuantitySheet({ opened, onClose, item }: RemoveQua
           >
             {isSaving
               ? 'Speichert...'
-              : remaining === 0
-                ? 'Alle entnehmen & löschen'
-                : `${removeCount} ${item.unit} entnehmen`
+              : maxCount === 1
+                ? 'Entnehmen & löschen'
+                : remaining === 0
+                  ? 'Alle entnehmen & löschen'
+                  : `${removeCount} ${item.unit} entnehmen`
             }
           </Button>
         </div>

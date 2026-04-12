@@ -58,7 +58,7 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit, onRemove }:
       if (offsetX < -60) {
         setOffsetX(0)
         onDelete(item.id)
-      } else if (offsetX > 60 && item.quantity > 1) {
+      } else if (offsetX > 60) {
         setOffsetX(0)
         onRemove(item)
       } else {
@@ -89,28 +89,26 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit, onRemove }:
   return (
     <div style={{ position: 'relative', overflow: 'hidden' }}>
       {/* Swipe-right: green "Entnehmen" action */}
-      {item.quantity > 1 && (
-        <div
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 100,
-            background: '#34C759',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            fontWeight: 600,
-            fontSize: 14,
-            cursor: 'pointer',
-          }}
-          onClick={() => onRemove(item)}
-        >
-          Entnehmen
-        </div>
-      )}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 100,
+          background: '#34C759',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          fontWeight: 600,
+          fontSize: 14,
+          cursor: 'pointer',
+        }}
+        onClick={() => onRemove(item)}
+      >
+        Entnehmen
+      </div>
 
       {/* Swipe-left: red "Löschen" action */}
       <div
