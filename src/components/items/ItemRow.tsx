@@ -8,9 +8,10 @@ interface ItemRowProps {
   tags: Tag[]
   onDelete: (id: string) => void
   onEdit: (item: Item) => void
+  onRemove: (item: Item) => void
 }
 
-export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowProps) {
+export default memo(function ItemRow({ item, tags, onDelete, onEdit, onRemove }: ItemRowProps) {
   const [offsetX, setOffsetX] = useState(0)
   const [swiping, setSwiping] = useState(false)
   const startX = useRef(0)
@@ -48,19 +49,26 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
 
     e.preventDefault()
     const diff = dx + startOffset.current
-    setOffsetX(Math.max(-100, Math.min(0, diff)))
+    setOffsetX(Math.max(-100, Math.min(100, diff)))
   }, [swiping])
 
   const handleTouchEnd = useCallback(() => {
     setSwiping(false)
-    if (direction.current === 'horizontal' && offsetX < -60) {
-      setOffsetX(0)
-      onDelete(item.id)
+    if (direction.current === 'horizontal') {
+      if (offsetX < -60) {
+        setOffsetX(0)
+        onDelete(item.id)
+      } else if (offsetX > 60 && item.quantity > 1) {
+        setOffsetX(0)
+        onRemove(item)
+      } else {
+        setOffsetX(0)
+      }
     } else {
       setOffsetX(0)
     }
     direction.current = 'none'
-  }, [offsetX, item.id, onDelete])
+  }, [offsetX, item, onDelete, onRemove])
 
   const handleClick = useCallback(() => {
     if (suppressClickRef.current) {
@@ -80,6 +88,31 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit }: ItemRowPr
 
   return (
     <div style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* Swipe-right: green "Entnehmen" action */}
+      {item.quantity > 1 && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 100,
+            background: '#34C759',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'white',
+            fontWeight: 600,
+            fontSize: 14,
+            cursor: 'pointer',
+          }}
+          onClick={() => onRemove(item)}
+        >
+          Entnehmen
+        </div>
+      )}
+
+      {/* Swipe-left: red "Löschen" action */}
       <div
         style={{
           position: 'absolute',

@@ -4,6 +4,7 @@ import { deleteItem } from '../../hooks/useFreezerData'
 import ItemRow from './ItemRow'
 import EmptyState from '../common/EmptyState'
 import ConfirmDialog from '../common/ConfirmDialog'
+import RemoveQuantitySheet from './RemoveQuantitySheet'
 
 interface ItemListProps {
   items: Item[]
@@ -13,6 +14,7 @@ interface ItemListProps {
 
 export default function ItemList({ items, tags, onEdit }: ItemListProps) {
   const [deleteTarget, setDeleteTarget] = useState<Item | null>(null)
+  const [removeTarget, setRemoveTarget] = useState<Item | null>(null)
 
   if (items.length === 0) {
     return (
@@ -43,6 +45,7 @@ export default function ItemList({ items, tags, onEdit }: ItemListProps) {
             tags={tags}
             onDelete={() => setDeleteTarget(item)}
             onEdit={onEdit}
+            onRemove={(i) => setRemoveTarget(i)}
           />
         ))}
       </div>
@@ -53,6 +56,11 @@ export default function ItemList({ items, tags, onEdit }: ItemListProps) {
         confirmText="Entfernen"
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
+      />
+      <RemoveQuantitySheet
+        opened={removeTarget !== null}
+        onClose={() => setRemoveTarget(null)}
+        item={removeTarget}
       />
     </>
   )
