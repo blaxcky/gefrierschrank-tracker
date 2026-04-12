@@ -1,24 +1,17 @@
 import { useState } from 'react'
 import { Button, Page } from 'konsta/react'
 import { initializeDatabase } from '../db/seed'
-import { signInWithPassword, signUpWithPassword } from '../services/authService'
+import { signInWithPassword } from '../services/authService'
 import { useSessionStore } from '../store/useSessionStore'
 import { setLocalOnlyPreferred } from '../utils/localMode'
-
-type AuthMode = 'login' | 'register'
 
 export default function AuthPage() {
   const setSession = useSessionStore((state) => state.setSession)
   const setSyncState = useSessionStore((state) => state.setSyncState)
-  const [mode, setMode] = useState<AuthMode>('login')
-  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [info, setInfo] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const isLogin = mode === 'login'
 
   const handleEnterLocalMode = async () => {
     setLocalOnlyPreferred(true)
@@ -39,23 +32,16 @@ export default function AuthPage() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!email.trim() || !password.trim() || (!isLogin && !displayName.trim())) {
+    if (!email.trim() || !password.trim()) {
       setError('Bitte alle Pflichtfelder ausfüllen.')
       return
     }
 
     setIsSubmitting(true)
     setError(null)
-    setInfo(null)
 
     try {
-      if (isLogin) {
-        await signInWithPassword(email.trim(), password)
-      } else {
-        await signUpWithPassword(email.trim(), password, displayName.trim())
-        setInfo('Konto angelegt. Falls E-Mail-Bestätigung aktiv ist, bestätige zuerst deine Adresse.')
-        setMode('login')
-      }
+      await signInWithPassword(email.trim(), password)
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Anmeldung fehlgeschlagen.')
     } finally {
@@ -92,7 +78,7 @@ export default function AuthPage() {
             </div>
           </div>
           <p style={{ margin: 0, color: '#475569', lineHeight: 1.5 }}>
-            Melde dich mit deinem freigeschalteten Konto an, damit ihr beide denselben Bestand synchron halten könnt.
+            Melde dich mit deinem manuell freigeschalteten Konto an. Neue Konten werden nicht in der App registriert, sondern von dir in Supabase angelegt.
           </p>
         </div>
 
@@ -104,53 +90,21 @@ export default function AuthPage() {
           boxShadow: '0 18px 40px rgba(15, 23, 42, 0.08)',
         }}
         >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 18 }}>
-            <button
-              onClick={() => setMode('login')}
-              style={{
-                border: 'none',
-                borderRadius: 14,
-                padding: '12px 14px',
-                fontWeight: 600,
-                background: isLogin ? '#0F172A' : '#E2E8F0',
-                color: isLogin ? 'white' : '#334155',
-                cursor: 'pointer',
-              }}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => setMode('register')}
-              style={{
-                border: 'none',
-                borderRadius: 14,
-                padding: '12px 14px',
-                fontWeight: 600,
-                background: !isLogin ? '#0F172A' : '#E2E8F0',
-                color: !isLogin ? 'white' : '#334155',
-                cursor: 'pointer',
-              }}
-            >
-              Registrieren
-            </button>
+          <div
+            style={{
+              marginBottom: 18,
+              borderRadius: 14,
+              padding: '12px 14px',
+              background: '#0F172A',
+              color: 'white',
+              fontWeight: 700,
+              textAlign: 'center',
+            }}
+          >
+            Login
           </div>
 
           <form onSubmit={handleSubmit}>
-            {!isLogin && (
-              <label style={{ display: 'block', marginBottom: 12 }}>
-                <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
-                  Name
-                </span>
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(event) => setDisplayName(event.target.value)}
-                  placeholder="z. B. Markus"
-                  style={inputStyle}
-                />
-              </label>
-            )}
-
             <label style={{ display: 'block', marginBottom: 12 }}>
               <span style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
                 E-Mail
@@ -173,8 +127,8 @@ export default function AuthPage() {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Mindestens 6 Zeichen"
-                autoComplete={isLogin ? 'current-password' : 'new-password'}
+                placeholder="Dein Passwort"
+                autoComplete="current-password"
                 style={inputStyle}
               />
             </label>
@@ -185,14 +139,8 @@ export default function AuthPage() {
               </div>
             )}
 
-            {info && (
-              <div style={messageStyle('#EFF6FF', '#1D4ED8')}>
-                {info}
-              </div>
-            )}
-
             <Button large type="submit" disabled={isSubmitting} style={{ width: '100%', background: '#2563EB', color: 'white' }}>
-              {isSubmitting ? 'Bitte warten...' : isLogin ? 'Anmelden' : 'Konto anlegen'}
+              {isSubmitting ? 'Bitte warten...' : 'Anmelden'}
             </Button>
           </form>
 

@@ -35,23 +35,6 @@ export async function signInWithPassword(email: string, password: string) {
   }
 }
 
-export async function signUpWithPassword(email: string, password: string, displayName: string) {
-  const client = getSupabaseClient()
-  const { error } = await client.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        display_name: displayName.trim() || null,
-      },
-    },
-  })
-
-  if (error) {
-    throw new Error(error.message)
-  }
-}
-
 export async function signOutUser() {
   if (supabase) {
     const { error } = await supabase.auth.signOut()

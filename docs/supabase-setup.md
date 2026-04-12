@@ -43,16 +43,16 @@ returning id, name;
 
 Die `id` aus dem Ergebnis notieren.
 
-## 5. Nutzer registrieren
+## 5. Nutzer in Supabase anlegen
 
-1. Du registrierst dich in der App mit E-Mail + Passwort.
-2. Dein Freund registriert sich ebenfalls in der App mit eigener E-Mail + Passwort.
+1. Du legst dich und deinen Freund in `Authentication > Users` manuell an.
+2. Weise jedem Nutzer ein Passwort zu oder verschicke einen Passwort-Reset.
 
-Wichtig: Erst nach der Registrierung existiert der Nutzer in `auth.users`.
+Wichtig: Die App bietet keinen Self-Signup an. Ein Nutzer muss zuerst in `auth.users` existieren.
 
 ## 6. Zugriff auf den Haushalt freischalten
 
-Sobald beide Konten registriert sind, im SQL Editor ausfuhren:
+Sobald beide Konten in Supabase Auth existieren, im SQL Editor ausfuhren:
 
 ```sql
 insert into public.household_members (household_id, user_id, role)
