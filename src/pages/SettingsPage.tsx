@@ -38,11 +38,13 @@ export default function SettingsPage() {
   const tags = useTags()
   const conflicts = useSyncConflicts()
   const pendingSyncCount = usePendingSyncCount()
+  const status = useSessionStore((state) => state.status)
   const profile = useSessionStore((state) => state.profile)
   const household = useSessionStore((state) => state.household)
   const lastSyncAt = useSessionStore((state) => state.lastSyncAt)
   const isSyncing = useSessionStore((state) => state.isSyncing)
   const syncError = useSessionStore((state) => state.syncError)
+  const isLocalOnly = status === 'local_only'
 
   const [freezerName, setFreezerName] = useState('')
   const [nameEditing, setNameEditing] = useState(false)
@@ -164,32 +166,54 @@ export default function SettingsPage() {
         className="settings-navbar"
       />
 
-      <List strongIos insetIos>
-        <ListItem title={<strong>Konto</strong>} />
-        <ListItem title="E-Mail" after={profile?.email ?? 'Unbekannt'} />
-        <ListItem title="Haushalt" after={household?.name ?? 'Nicht gesetzt'} />
-        <ListItem title="Rolle" after={household?.role ?? 'Kein Zugriff'} />
-        <ListItem
-          title="Abmelden"
-          onClick={handleSignOut}
-          after={isSigningOut ? '...' : undefined}
-          link={!isSigningOut}
-        />
-      </List>
+      {isLocalOnly ? (
+        <div
+          style={{
+            margin: '12px 16px 0',
+            background: '#ECFDF5',
+            border: '1px solid #86EFAC',
+            borderRadius: 16,
+            padding: '14px 16px',
+            color: '#166534',
+          }}
+        >
+          <div style={{ fontWeight: 700, marginBottom: 4 }}>
+            Lokaler Modus
+          </div>
+          <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+            Die App ist voll nutzbar, speichert aber nur auf diesem Geraet. Login, Cloud-Sync und Konfliktbereinigung werden aktiv, sobald Supabase konfiguriert ist.
+          </div>
+        </div>
+      ) : (
+        <>
+          <List strongIos insetIos>
+            <ListItem title={<strong>Konto</strong>} />
+            <ListItem title="E-Mail" after={profile?.email ?? 'Unbekannt'} />
+            <ListItem title="Haushalt" after={household?.name ?? 'Nicht gesetzt'} />
+            <ListItem title="Rolle" after={household?.role ?? 'Kein Zugriff'} />
+            <ListItem
+              title="Abmelden"
+              onClick={handleSignOut}
+              after={isSigningOut ? '...' : undefined}
+              link={!isSigningOut}
+            />
+          </List>
 
-      <List strongIos insetIos>
-        <ListItem title={<strong>Synchronisation</strong>} />
-        <ListItem title="Status" after={isSyncing ? 'Lauft...' : pendingSyncCount ? `${pendingSyncCount} ausstehend` : 'Aktuell'} />
-        <ListItem title="Letzter Sync" after={lastSyncAt ? formatDateTime(lastSyncAt) : 'Noch nie'} />
-        <ListItem title="Offene Konflikte" after={String(conflicts?.length ?? 0)} />
-        {syncError && (
-          <li style={{ padding: '0 16px 12px', color: '#B91C1C', fontSize: 13 }}>
-            {syncError}
-          </li>
-        )}
-        <ListItem link title="Jetzt synchronisieren" onClick={handleManualSync} />
-        <ListItem link title="Konflikte bereinigen" subtitle="Lokale und Cloud-Version vergleichen" onClick={() => navigate('/sync-konflikte')} />
-      </List>
+          <List strongIos insetIos>
+            <ListItem title={<strong>Synchronisation</strong>} />
+            <ListItem title="Status" after={isSyncing ? 'Lauft...' : pendingSyncCount ? `${pendingSyncCount} ausstehend` : 'Aktuell'} />
+            <ListItem title="Letzter Sync" after={lastSyncAt ? formatDateTime(lastSyncAt) : 'Noch nie'} />
+            <ListItem title="Offene Konflikte" after={String(conflicts?.length ?? 0)} />
+            {syncError && (
+              <li style={{ padding: '0 16px 12px', color: '#B91C1C', fontSize: 13 }}>
+                {syncError}
+              </li>
+            )}
+            <ListItem link title="Jetzt synchronisieren" onClick={handleManualSync} />
+            <ListItem link title="Konflikte bereinigen" subtitle="Lokale und Cloud-Version vergleichen" onClick={() => navigate('/sync-konflikte')} />
+          </List>
+        </>
+      )}
 
       <List strongIos insetIos>
         <ListItem
@@ -302,8 +326,10 @@ export default function SettingsPage() {
         <ListItem link title="Daten importieren" onClick={() => fileInputRef.current?.click()} />
         <ListItem
           link
-          title={<span style={{ color: '#FF3B30' }}>Haushalt zurucksetzen</span>}
-          subtitle="Setzt den gemeinsamen Bestand fur alle Mitglieder auf den Startzustand"
+          title={<span style={{ color: '#FF3B30' }}>{isLocalOnly ? 'Lokale Daten zurucksetzen' : 'Haushalt zurucksetzen'}</span>}
+          subtitle={isLocalOnly
+            ? 'Loescht alle lokalen Daten auf diesem Geraet und startet mit frischen Beispieldaten'
+            : 'Setzt den gemeinsamen Bestand fur alle Mitglieder auf den Startzustand'}
           onClick={() => setShowClearConfirm(true)}
         />
         {installPrompt && (
@@ -331,7 +357,7 @@ export default function SettingsPage() {
       />
 
       <div style={{ textAlign: 'center', padding: '24px', color: '#94A3B8', fontSize: 13 }}>
-        Gefrierschrank Tracker mit Supabase-Sync
+        {isLocalOnly ? 'Gefrierschrank Tracker im lokalen Modus' : 'Gefrierschrank Tracker mit Supabase-Sync'}
       </div>
 
       <Dialog
@@ -352,8 +378,10 @@ export default function SettingsPage() {
       <Dialog
         opened={showClearConfirm}
         onBackdropClick={() => setShowClearConfirm(false)}
-        title="Haushalt zurucksetzen?"
-        content="Alle Gefrierschraenke, Faecher, Artikel und Tags werden fuer den gemeinsamen Haushalt entfernt und mit einem frischen Startbestand ersetzt."
+        title={isLocalOnly ? 'Lokale Daten zurucksetzen?' : 'Haushalt zurucksetzen?'}
+        content={isLocalOnly
+          ? 'Alle lokalen Gefrierschraenke, Faecher, Artikel und Tags auf diesem Geraet werden entfernt und mit einem frischen Startbestand ersetzt.'
+          : 'Alle Gefrierschraenke, Faecher, Artikel und Tags werden fuer den gemeinsamen Haushalt entfernt und mit einem frischen Startbestand ersetzt.'}
         buttons={
           <>
             <DialogButton onClick={() => setShowClearConfirm(false)}>

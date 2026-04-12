@@ -17,7 +17,7 @@ export interface Household {
   role: string
 }
 
-export type SessionStatus = 'loading' | 'config_missing' | 'signed_out' | 'needs_access' | 'ready'
+export type SessionStatus = 'loading' | 'local_only' | 'signed_out' | 'needs_access' | 'ready'
 
 interface SessionState {
   status: SessionStatus
@@ -54,7 +54,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   syncError: null,
   setConfigured: (configured) => set({
     isConfigured: configured,
-    status: configured ? 'loading' : 'config_missing',
+    status: configured ? 'loading' : 'local_only',
   }),
   setSession: ({ status, user = null, profile = null, household = null }) => set({
     status,

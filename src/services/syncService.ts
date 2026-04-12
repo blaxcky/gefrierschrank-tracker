@@ -308,6 +308,11 @@ function getSupabaseClient() {
   return supabase
 }
 
+function isLocalOnlyMode() {
+  const { status, isConfigured } = useSessionStore.getState()
+  return status === 'local_only' || !isConfigured || !supabase
+}
+
 function getCurrentSyncContext() {
   const { user, household } = useSessionStore.getState()
 
@@ -321,11 +326,32 @@ function getCurrentSyncContext() {
   }
 }
 
+function getWriteContext() {
+  if (isLocalOnlyMode()) {
+    return {
+      userId: null,
+      householdId: null,
+      syncStatus: 'synced' as SyncStatus,
+    }
+  }
+
+  const { userId, householdId } = getCurrentSyncContext()
+  return {
+    userId,
+    householdId,
+    syncStatus: 'pending' as SyncStatus,
+  }
+}
+
 function serializeEntity(entity: SyncableEntity): Record<string, unknown> {
   return JSON.parse(JSON.stringify(entity)) as Record<string, unknown>
 }
 
-function isVisibleEntity(entity: SyncableEntity, householdId: string) {
+function isVisibleEntity(entity: SyncableEntity, householdId: string | null) {
+  if (householdId === null) {
+    return entity.deletedAt === null
+  }
+
   return entity.householdId === householdId && entity.deletedAt === null
 }
 
@@ -351,8 +377,8 @@ async function setLastSyncAtInternal(date: Date) {
 }
 
 function buildSyncFields(
-  householdId: string,
-  userId: string,
+  householdId: string | null,
+  userId: string | null,
   currentVersion: number,
   lastSyncedVersion: number,
   syncStatus: SyncStatus,
@@ -682,6 +708,22 @@ async function applyRemoteSnapshot(snapshot: RemoteSnapshot, householdId: string
 }
 
 export async function synchronizeHousehold(): Promise<SyncResult> {
+  if (isLocalOnlyMode()) {
+    const finishedAt = new Date()
+    useSessionStore.getState().setSyncState({
+      isSyncing: false,
+      syncError: null,
+      lastSyncAt: null,
+    })
+
+    return {
+      pushed: 0,
+      pulled: 0,
+      conflicts: 0,
+      finishedAt,
+    }
+  }
+
   if (activeSync) {
     return activeSync
   }
@@ -757,6 +799,12 @@ export async function clearLocalData() {
 }
 
 export async function resetHouseholdData() {
+  if (isLocalOnlyMode()) {
+    await clearLocalData()
+    await initializeDatabase()
+    return
+  }
+
   const { userId, householdId } = requireSessionContext()
   const deletedAt = new Date()
 
@@ -815,6 +863,10 @@ export async function getPendingSyncCountForHousehold(householdId: string) {
 }
 
 export async function resolveSyncConflict(conflictId: string, winnerSource: ConflictWinnerSource) {
+  if (isLocalOnlyMode()) {
+    throw new Error('Im lokalen Modus gibt es keine Cloud-Konflikte.')
+  }
+
   const conflict = await db.syncConflicts.get(conflictId)
   if (!conflict) {
     throw new Error('Konflikt wurde nicht gefunden.')
@@ -874,28 +926,32 @@ function requireSessionContext() {
   }
 }
 
-async function getVisibleTagByName(householdId: string, name: string) {
-  const tags = await db.tags.where('householdId').equals(householdId).toArray()
+async function getVisibleTagByName(householdId: string | null, name: string) {
+  const tags = householdId === null
+    ? await db.tags.toArray()
+    : await db.tags.where('householdId').equals(householdId).toArray()
   return tags.find((tag) => tag.deletedAt === null && tag.name.toLowerCase() === name.toLowerCase()) ?? null
 }
 
 export async function addFreezer(name: string): Promise<Freezer> {
-  const { userId, householdId } = requireSessionContext()
-  const freezers = await db.freezers.where('householdId').equals(householdId).toArray()
+  const { userId, householdId, syncStatus } = getWriteContext()
+  const freezers = householdId === null
+    ? await db.freezers.toArray()
+    : await db.freezers.where('householdId').equals(householdId).toArray()
   const visibleCount = freezers.filter((freezer) => freezer.deletedAt === null).length
   const freezer: Freezer = {
     id: crypto.randomUUID(),
     name,
     order: visibleCount,
     createdAt: new Date(),
-    ...buildSyncFields(householdId, userId, 1, 0, 'pending'),
+    ...buildSyncFields(householdId, userId, 1, 0, syncStatus),
   }
   await db.freezers.add(freezer)
   return freezer
 }
 
 export async function updateFreezer(id: string, updates: Partial<Freezer>) {
-  const { userId, householdId } = requireSessionContext()
+  const { userId, householdId, syncStatus } = getWriteContext()
   const freezer = await db.freezers.get(id)
   if (!freezer) return
 
@@ -906,16 +962,18 @@ export async function updateFreezer(id: string, updates: Partial<Freezer>) {
       householdId,
       userId,
       freezer.version + 1,
-      freezer.syncStatus === 'pending' ? freezer.lastSyncedVersion : freezer.version,
-      'pending',
+      syncStatus === 'pending' && freezer.syncStatus === 'pending' ? freezer.lastSyncedVersion : freezer.version,
+      syncStatus,
       freezer.deletedAt,
     ),
   })
 }
 
 export async function addDrawer(freezerId: string, name: string, color: string): Promise<Drawer> {
-  const { userId, householdId } = requireSessionContext()
-  const drawers = await db.drawers.where('householdId').equals(householdId).toArray()
+  const { userId, householdId, syncStatus } = getWriteContext()
+  const drawers = householdId === null
+    ? await db.drawers.toArray()
+    : await db.drawers.where('householdId').equals(householdId).toArray()
   const visibleCount = drawers.filter((drawer) => drawer.freezerId === freezerId && drawer.deletedAt === null).length
   const drawer: Drawer = {
     id: crypto.randomUUID(),
@@ -924,14 +982,14 @@ export async function addDrawer(freezerId: string, name: string, color: string):
     order: visibleCount,
     color,
     createdAt: new Date(),
-    ...buildSyncFields(householdId, userId, 1, 0, 'pending'),
+    ...buildSyncFields(householdId, userId, 1, 0, syncStatus),
   }
   await db.drawers.add(drawer)
   return drawer
 }
 
 export async function updateDrawer(id: string, updates: Partial<Drawer>) {
-  const { userId, householdId } = requireSessionContext()
+  const { userId, householdId, syncStatus } = getWriteContext()
   const drawer = await db.drawers.get(id)
   if (!drawer) return
 
@@ -942,15 +1000,15 @@ export async function updateDrawer(id: string, updates: Partial<Drawer>) {
       householdId,
       userId,
       drawer.version + 1,
-      drawer.syncStatus === 'pending' ? drawer.lastSyncedVersion : drawer.version,
-      'pending',
+      syncStatus === 'pending' && drawer.syncStatus === 'pending' ? drawer.lastSyncedVersion : drawer.version,
+      syncStatus,
       drawer.deletedAt,
     ),
   })
 }
 
 export async function deleteDrawer(id: string) {
-  const { userId, householdId } = requireSessionContext()
+  const { userId, householdId, syncStatus } = getWriteContext()
   const drawer = await db.drawers.get(id)
   if (!drawer) return
 
@@ -960,14 +1018,14 @@ export async function deleteDrawer(id: string) {
     await db.drawers.put({
       ...drawer,
       ...buildSyncFields(
-        householdId,
-        userId,
-        drawer.version + 1,
-        drawer.syncStatus === 'pending' ? drawer.lastSyncedVersion : drawer.version,
-        'pending',
-        deletedAt,
-      ),
-    })
+          householdId,
+          userId,
+          drawer.version + 1,
+          syncStatus === 'pending' && drawer.syncStatus === 'pending' ? drawer.lastSyncedVersion : drawer.version,
+          syncStatus,
+          deletedAt,
+        ),
+      })
 
     const items = await db.items.where('drawerId').equals(id).toArray()
     for (const item of items) {
@@ -977,8 +1035,8 @@ export async function deleteDrawer(id: string) {
           householdId,
           userId,
           item.version + 1,
-          item.syncStatus === 'pending' ? item.lastSyncedVersion : item.version,
-          'pending',
+          syncStatus === 'pending' && item.syncStatus === 'pending' ? item.lastSyncedVersion : item.version,
+          syncStatus,
           deletedAt,
         ),
       })
@@ -994,7 +1052,7 @@ export async function addItem(
   tags: string[],
   notes: string,
 ): Promise<Item> {
-  const { userId, householdId } = requireSessionContext()
+  const { userId, householdId, syncStatus } = getWriteContext()
   const item: Item = {
     id: crypto.randomUUID(),
     drawerId,
@@ -1004,14 +1062,14 @@ export async function addItem(
     tags,
     notes,
     dateAdded: new Date(),
-    ...buildSyncFields(householdId, userId, 1, 0, 'pending'),
+    ...buildSyncFields(householdId, userId, 1, 0, syncStatus),
   }
   await db.items.add(item)
   return item
 }
 
 export async function deleteItem(id: string) {
-  const { userId, householdId } = requireSessionContext()
+  const { userId, householdId, syncStatus } = getWriteContext()
   const item = await db.items.get(id)
   if (!item) return
 
@@ -1021,15 +1079,15 @@ export async function deleteItem(id: string) {
       householdId,
       userId,
       item.version + 1,
-      item.syncStatus === 'pending' ? item.lastSyncedVersion : item.version,
-      'pending',
+      syncStatus === 'pending' && item.syncStatus === 'pending' ? item.lastSyncedVersion : item.version,
+      syncStatus,
       new Date(),
     ),
   })
 }
 
 export async function updateItem(id: string, updates: Partial<Item>) {
-  const { userId, householdId } = requireSessionContext()
+  const { userId, householdId, syncStatus } = getWriteContext()
   const item = await db.items.get(id)
   if (!item) return
 
@@ -1040,15 +1098,15 @@ export async function updateItem(id: string, updates: Partial<Item>) {
       householdId,
       userId,
       item.version + 1,
-      item.syncStatus === 'pending' ? item.lastSyncedVersion : item.version,
-      'pending',
+      syncStatus === 'pending' && item.syncStatus === 'pending' ? item.lastSyncedVersion : item.version,
+      syncStatus,
       item.deletedAt,
     ),
   })
 }
 
 export async function addTag(name: string, color: string): Promise<Tag> {
-  const { userId, householdId } = requireSessionContext()
+  const { userId, householdId, syncStatus } = getWriteContext()
   const existingTag = await getVisibleTagByName(householdId, name)
   if (existingTag) {
     throw new Error('Tag existiert bereits.')
@@ -1059,14 +1117,14 @@ export async function addTag(name: string, color: string): Promise<Tag> {
     name,
     color,
     createdAt: new Date(),
-    ...buildSyncFields(householdId, userId, 1, 0, 'pending'),
+    ...buildSyncFields(householdId, userId, 1, 0, syncStatus),
   }
   await db.tags.add(tag)
   return tag
 }
 
 export async function deleteTag(id: string) {
-  const { userId, householdId } = requireSessionContext()
+  const { userId, householdId, syncStatus } = getWriteContext()
   const tag = await db.tags.get(id)
   if (!tag) return
 
@@ -1076,15 +1134,15 @@ export async function deleteTag(id: string) {
       householdId,
       userId,
       tag.version + 1,
-      tag.syncStatus === 'pending' ? tag.lastSyncedVersion : tag.version,
-      'pending',
+      syncStatus === 'pending' && tag.syncStatus === 'pending' ? tag.lastSyncedVersion : tag.version,
+      syncStatus,
       new Date(),
     ),
   })
 }
 
 export async function updateTag(id: string, updates: Partial<Tag>) {
-  const { userId, householdId } = requireSessionContext()
+  const { userId, householdId, syncStatus } = getWriteContext()
   const tag = await db.tags.get(id)
   if (!tag) return
 
@@ -1095,8 +1153,8 @@ export async function updateTag(id: string, updates: Partial<Tag>) {
       householdId,
       userId,
       tag.version + 1,
-      tag.syncStatus === 'pending' ? tag.lastSyncedVersion : tag.version,
-      'pending',
+      syncStatus === 'pending' && tag.syncStatus === 'pending' ? tag.lastSyncedVersion : tag.version,
+      syncStatus,
       tag.deletedAt,
     ),
   })
@@ -1106,6 +1164,6 @@ export async function getLastSyncAt() {
   return getLastSyncAtInternal()
 }
 
-export function isEntityVisibleForHousehold(entity: SyncableEntity, householdId: string) {
+export function isEntityVisibleForHousehold(entity: SyncableEntity, householdId: string | null) {
   return isVisibleEntity(entity, householdId)
 }

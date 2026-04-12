@@ -7,6 +7,7 @@ import DrawerList from '../components/freezer/DrawerList'
 import AddDrawerSheet from '../components/freezer/AddDrawerSheet'
 import ReloadPrompt from '../components/common/ReloadPrompt'
 import type { Drawer } from '../db/database'
+import { useSessionStore } from '../store/useSessionStore'
 import { getExportReminderInfo } from '../utils/export'
 
 export default function FreezerViewPage() {
@@ -14,6 +15,7 @@ export default function FreezerViewPage() {
   const drawers = useDrawers(freezer?.id)
   const pendingSyncCount = usePendingSyncCount()
   const conflicts = useSyncConflicts()
+  const isLocalOnly = useSessionStore((state) => state.status === 'local_only')
   const navigate = useNavigate()
   const exportReminder = getExportReminderInfo()
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -63,7 +65,24 @@ export default function FreezerViewPage() {
       />
 
       <FreezerBody>
-        {(conflicts?.length ?? 0) > 0 && (
+        {isLocalOnly && (
+          <div
+            style={{
+              margin: '0 12px 12px',
+              background: '#ECFDF5',
+              border: '1px solid #86EFAC',
+              borderRadius: 12,
+              padding: '10px 14px',
+              color: '#166534',
+              fontSize: 13,
+              lineHeight: 1.45,
+            }}
+          >
+            Lokaler Modus aktiv. Deine Daten bleiben nur auf diesem Gerät, bis Supabase eingerichtet ist.
+          </div>
+        )}
+
+        {!isLocalOnly && (conflicts?.length ?? 0) > 0 && (
           <div
             style={{
               margin: '0 12px 12px',
@@ -97,7 +116,7 @@ export default function FreezerViewPage() {
           </div>
         )}
 
-        {(pendingSyncCount ?? 0) > 0 && (
+        {!isLocalOnly && (pendingSyncCount ?? 0) > 0 && (
           <div
             style={{
               margin: '0 12px 12px',

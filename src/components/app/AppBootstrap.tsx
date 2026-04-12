@@ -1,6 +1,7 @@
 import { type PropsWithChildren, useEffect } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../../lib/supabase'
+import { initializeDatabase } from '../../db/seed'
 import { resolveSessionContext } from '../../services/authService'
 import { clearLocalData, hydrateSyncStateFromDatabase, synchronizeHousehold } from '../../services/syncService'
 import { useSessionStore } from '../../store/useSessionStore'
@@ -64,6 +65,21 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
     setConfigured(isSupabaseConfigured)
 
     if (!isSupabaseConfigured || !supabase) {
+      void initializeDatabase().then(() => {
+        if (!isActive) return
+        setSession({
+          status: 'local_only',
+          user: null,
+          profile: null,
+          household: null,
+        })
+        setSyncState({
+          isSyncing: false,
+          syncError: null,
+          lastSyncAt: null,
+        })
+      })
+
       return () => {
         isActive = false
       }

@@ -5,7 +5,6 @@ import DrawerViewPage from './pages/DrawerViewPage'
 import SettingsPage from './pages/SettingsPage'
 import FrozenDurationPage from './pages/ExpiryOverviewPage'
 import AuthPage from './pages/AuthPage'
-import ConfigRequiredPage from './pages/ConfigRequiredPage'
 import AccessPendingPage from './pages/AccessPendingPage'
 import SyncConflictsPage from './pages/SyncConflictsPage'
 import { useSessionStore } from './store/useSessionStore'
@@ -22,11 +21,10 @@ function App() {
           </div>
         )}
 
-        {status === 'config_missing' && <ConfigRequiredPage />}
         {status === 'signed_out' && <AuthPage />}
         {status === 'needs_access' && <AccessPendingPage />}
 
-        {status === 'ready' && (
+        {(status === 'ready' || status === 'local_only') && (
           <Routes>
             <Route path="/" element={<FreezerViewPage />} />
             <Route path="/drawer/:drawerId" element={<DrawerViewPage />} />

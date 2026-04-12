@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { Button, Navbar, NavbarBackLink, Page } from 'konsta/react'
 import EmptyState from '../components/common/EmptyState'
 import { resolveSyncConflict, synchronizeHousehold, useSyncConflicts } from '../hooks/useFreezerData'
+import { useSessionStore } from '../store/useSessionStore'
 
 export default function SyncConflictsPage() {
   const navigate = useNavigate()
   const conflicts = useSyncConflicts()
+  const isLocalOnly = useSessionStore((state) => state.status === 'local_only')
   const [busyConflictId, setBusyConflictId] = useState<string | null>(null)
 
   const visibleConflicts = useMemo(() => conflicts ?? [], [conflicts])
@@ -28,7 +30,13 @@ export default function SyncConflictsPage() {
         left={<NavbarBackLink onClick={() => navigate('/settings')} text="Zuruck" />}
       />
 
-      {visibleConflicts.length === 0 ? (
+      {isLocalOnly ? (
+        <EmptyState
+          icon="&#128190;"
+          title="Lokaler Modus aktiv"
+          subtitle="Ohne Supabase gibt es keine Cloud-Konflikte. Diese Seite wird erst mit aktivierter Synchronisation relevant."
+        />
+      ) : visibleConflicts.length === 0 ? (
         <EmptyState
           icon="&#9989;"
           title="Keine offenen Konflikte"
