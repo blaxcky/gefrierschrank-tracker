@@ -1,150 +1,145 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, type Freezer, type Drawer, type Item, type Tag } from '../db/database'
+import { db } from '../db/database'
+import { useSessionStore } from '../store/useSessionStore'
+import {
+  addDrawer,
+  addFreezer,
+  addItem,
+  addTag,
+  deleteDrawer,
+  deleteItem,
+  deleteTag,
+  getPendingSyncCountForHousehold,
+  isEntityVisibleForHousehold,
+  resolveSyncConflict,
+  synchronizeHousehold,
+  updateDrawer,
+  updateFreezer,
+  updateItem,
+  updateTag,
+} from '../services/syncService'
+
+export { addDrawer, addFreezer, addItem, addTag, deleteDrawer, deleteItem, deleteTag, resolveSyncConflict, synchronizeHousehold, updateDrawer, updateFreezer, updateItem, updateTag }
+
+function useHouseholdId() {
+  return useSessionStore((state) => state.household?.id)
+}
 
 export function useFreezers() {
-  return useLiveQuery(() => db.freezers.orderBy('order').toArray())
+  const householdId = useHouseholdId()
+
+  return useLiveQuery(async () => {
+    if (!householdId) return []
+    const freezers = await db.freezers.orderBy('order').toArray()
+    return freezers.filter((freezer) => isEntityVisibleForHousehold(freezer, householdId))
+  }, [householdId])
 }
 
 export function useFirstFreezer() {
-  return useLiveQuery(() => db.freezers.orderBy('order').first())
+  const freezers = useFreezers()
+  return freezers?.[0]
 }
 
 export function useDrawers(freezerId: string | undefined) {
+  const householdId = useHouseholdId()
+
   return useLiveQuery(
-    () => freezerId
-      ? db.drawers.where('freezerId').equals(freezerId).sortBy('order')
-      : [],
-    [freezerId]
+    async () => {
+      if (!freezerId || !householdId) return []
+      const drawers = await db.drawers.where('freezerId').equals(freezerId).sortBy('order')
+      return drawers.filter((drawer) => isEntityVisibleForHousehold(drawer, householdId))
+    },
+    [freezerId, householdId]
   )
 }
 
 export function useDrawer(drawerId: string | undefined) {
+  const householdId = useHouseholdId()
+
   return useLiveQuery(
-    () => drawerId ? db.drawers.get(drawerId) : undefined,
-    [drawerId]
+    async () => {
+      if (!drawerId || !householdId) return undefined
+      const drawer = await db.drawers.get(drawerId)
+      if (!drawer || !isEntityVisibleForHousehold(drawer, householdId)) return undefined
+      return drawer
+    },
+    [drawerId, householdId]
   )
 }
 
 export function useItems(drawerId: string | undefined) {
+  const householdId = useHouseholdId()
+
   return useLiveQuery(
-    () => drawerId
-      ? db.items.where('drawerId').equals(drawerId).toArray()
-      : [],
-    [drawerId]
+    async () => {
+      if (!drawerId || !householdId) return []
+      const items = await db.items.where('drawerId').equals(drawerId).toArray()
+      return items.filter((item) => isEntityVisibleForHousehold(item, householdId))
+    },
+    [drawerId, householdId]
   )
 }
 
 export function useItemsByFreezer(freezerId: string | undefined) {
+  const householdId = useHouseholdId()
+
   return useLiveQuery(async () => {
-    if (!freezerId) return []
+    if (!freezerId || !householdId) return []
     const drawers = await db.drawers.where('freezerId').equals(freezerId).toArray()
-    const drawerIds = drawers.map(drawer => drawer.id)
+    const visibleDrawers = drawers.filter((drawer) => isEntityVisibleForHousehold(drawer, householdId))
+    const drawerIds = visibleDrawers.map(drawer => drawer.id)
     if (drawerIds.length === 0) return []
-    return db.items.where('drawerId').anyOf(drawerIds).toArray()
-  }, [freezerId])
+    const items = await db.items.where('drawerId').anyOf(drawerIds).toArray()
+    return items.filter((item) => isEntityVisibleForHousehold(item, householdId))
+  }, [freezerId, householdId])
 }
 
 export function useDrawerStats(drawerId: string) {
+  const householdId = useHouseholdId()
+
   return useLiveQuery(async () => {
-    const items = await db.items.where('drawerId').equals(drawerId).toArray()
-    return {
-      items,
-      itemCount: items.length,
+    if (!householdId) {
+      return {
+        items: [],
+        itemCount: 0,
+      }
     }
-  }, [drawerId])
+    const items = await db.items.where('drawerId').equals(drawerId).toArray()
+    const visibleItems = items.filter((item) => isEntityVisibleForHousehold(item, householdId))
+    return {
+      items: visibleItems,
+      itemCount: visibleItems.length,
+    }
+  }, [drawerId, householdId])
 }
 
 export function useTags() {
-  return useLiveQuery(() => db.tags.toArray())
+  const householdId = useHouseholdId()
+
+  return useLiveQuery(async () => {
+    if (!householdId) return []
+    const tags = await db.tags.orderBy('name').toArray()
+    return tags.filter((tag) => isEntityVisibleForHousehold(tag, householdId))
+  }, [householdId])
 }
 
-// CRUD operations
+export function useSyncConflicts() {
+  const householdId = useHouseholdId()
 
-export async function addFreezer(name: string): Promise<Freezer> {
-  const count = await db.freezers.count()
-  const freezer: Freezer = {
-    id: crypto.randomUUID(),
-    name,
-    order: count,
-    createdAt: new Date(),
-  }
-  await db.freezers.add(freezer)
-  return freezer
+  return useLiveQuery(async () => {
+    if (!householdId) return []
+    const conflicts = await db.syncConflicts.where('householdId').equals(householdId).toArray()
+    return conflicts
+      .filter((conflict) => conflict.resolvedAt === null)
+      .sort((a, b) => b.detectedAt.getTime() - a.detectedAt.getTime())
+  }, [householdId])
 }
 
-export async function updateFreezer(id: string, updates: Partial<Freezer>) {
-  await db.freezers.update(id, updates)
-}
+export function usePendingSyncCount() {
+  const householdId = useHouseholdId()
 
-export async function addDrawer(freezerId: string, name: string, color: string): Promise<Drawer> {
-  const drawers = await db.drawers.where('freezerId').equals(freezerId).toArray()
-  const drawer: Drawer = {
-    id: crypto.randomUUID(),
-    freezerId,
-    name,
-    order: drawers.length,
-    color,
-    createdAt: new Date(),
-  }
-  await db.drawers.add(drawer)
-  return drawer
-}
-
-export async function updateDrawer(id: string, updates: Partial<Drawer>) {
-  await db.drawers.update(id, updates)
-}
-
-export async function deleteDrawer(id: string) {
-  await db.transaction('rw', [db.drawers, db.items], async () => {
-    await db.items.where('drawerId').equals(id).delete()
-    await db.drawers.delete(id)
-  })
-}
-
-export async function addItem(
-  drawerId: string,
-  name: string,
-  quantity: number,
-  unit: string,
-  tags: string[],
-  notes: string,
-): Promise<Item> {
-  const item: Item = {
-    id: crypto.randomUUID(),
-    drawerId,
-    name,
-    quantity,
-    unit,
-    tags,
-    notes,
-    dateAdded: new Date(),
-  }
-  await db.items.add(item)
-  return item
-}
-
-export async function deleteItem(id: string) {
-  await db.items.delete(id)
-}
-
-export async function updateItem(id: string, updates: Partial<Item>) {
-  await db.items.update(id, updates)
-}
-
-export async function addTag(name: string, color: string): Promise<Tag> {
-  const tag: Tag = {
-    id: crypto.randomUUID(),
-    name,
-    color,
-  }
-  await db.tags.add(tag)
-  return tag
-}
-
-export async function deleteTag(id: string) {
-  await db.tags.delete(id)
-}
-
-export async function updateTag(id: string, updates: Partial<Tag>) {
-  await db.tags.update(id, updates)
+  return useLiveQuery(async () => {
+    if (!householdId) return 0
+    return getPendingSyncCountForHousehold(householdId)
+  }, [householdId])
 }

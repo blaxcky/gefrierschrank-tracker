@@ -2,12 +2,12 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './app.css'
-import { initializeDatabase } from './db/seed'
-
-initializeDatabase()
+import AppBootstrap from './components/app/AppBootstrap'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <AppBootstrap>
+      <App />
+    </AppBootstrap>
   </React.StrictMode>,
 )

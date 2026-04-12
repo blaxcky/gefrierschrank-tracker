@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Page, Navbar, Fab } from 'konsta/react'
-import { useFirstFreezer, useDrawers } from '../hooks/useFreezerData'
+import { useFirstFreezer, useDrawers, usePendingSyncCount, useSyncConflicts } from '../hooks/useFreezerData'
 import FreezerBody from '../components/freezer/FreezerBody'
 import DrawerList from '../components/freezer/DrawerList'
 import AddDrawerSheet from '../components/freezer/AddDrawerSheet'
@@ -12,6 +12,8 @@ import { getExportReminderInfo } from '../utils/export'
 export default function FreezerViewPage() {
   const freezer = useFirstFreezer()
   const drawers = useDrawers(freezer?.id)
+  const pendingSyncCount = usePendingSyncCount()
+  const conflicts = useSyncConflicts()
   const navigate = useNavigate()
   const exportReminder = getExportReminderInfo()
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -61,6 +63,57 @@ export default function FreezerViewPage() {
       />
 
       <FreezerBody>
+        {(conflicts?.length ?? 0) > 0 && (
+          <div
+            style={{
+              margin: '0 12px 12px',
+              background: '#FFF7ED',
+              border: '1px solid #FDBA74',
+              borderRadius: 12,
+              padding: '12px 14px',
+            }}
+          >
+            <div style={{ fontWeight: 700, fontSize: 15, color: '#9A3412' }}>
+              Sync-Konflikte offen
+            </div>
+            <p style={{ margin: '6px 0 10px', color: '#9A3412', fontSize: 13, lineHeight: 1.4 }}>
+              {conflicts?.length} Datensatze brauchen eine Entscheidung zwischen lokaler und Cloud-Version.
+            </p>
+            <button
+              onClick={() => navigate('/sync-konflikte')}
+              style={{
+                background: '#EA580C',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                padding: '8px 12px',
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              Konflikte ansehen
+            </button>
+          </div>
+        )}
+
+        {(pendingSyncCount ?? 0) > 0 && (
+          <div
+            style={{
+              margin: '0 12px 12px',
+              background: '#EFF6FF',
+              border: '1px solid #BFDBFE',
+              borderRadius: 12,
+              padding: '10px 14px',
+              color: '#1D4ED8',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            {pendingSyncCount ?? 0} Anderungen warten noch auf Synchronisation.
+          </div>
+        )}
+
         {exportReminder.shouldShow && (
           <div
             style={{

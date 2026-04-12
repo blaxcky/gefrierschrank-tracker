@@ -1,38 +1,65 @@
-import { useState, useRef, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Page,
-  Navbar,
-  NavbarBackLink,
-  List,
-  ListItem,
-  ListInput,
   Button,
   Dialog,
   DialogButton,
+  List,
+  ListInput,
+  ListItem,
+  Navbar,
+  NavbarBackLink,
+  Page,
 } from 'konsta/react'
-import { useFirstFreezer, useTags, updateFreezer, deleteTag, addTag } from '../hooks/useFreezerData'
+import {
+  addTag,
+  synchronizeHousehold,
+  updateFreezer,
+  useFirstFreezer,
+  usePendingSyncCount,
+  useSyncConflicts,
+  useTags,
+  deleteTag,
+} from '../hooks/useFreezerData'
 import { exportData, importData, downloadJson, setLastExportAt } from '../utils/export'
-import { db } from '../db/database'
+import { resetHouseholdData } from '../services/syncService'
+import { signOutUser } from '../services/authService'
+import { useSessionStore } from '../store/useSessionStore'
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+}
+
+const TAG_COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#AF52DE', '#5AC8FA', '#FF2D55', '#8E8E93']
 
 export default function SettingsPage() {
   const navigate = useNavigate()
   const freezer = useFirstFreezer()
   const tags = useTags()
+  const conflicts = useSyncConflicts()
+  const pendingSyncCount = usePendingSyncCount()
+  const profile = useSessionStore((state) => state.profile)
+  const household = useSessionStore((state) => state.household)
+  const lastSyncAt = useSessionStore((state) => state.lastSyncAt)
+  const isSyncing = useSessionStore((state) => state.isSyncing)
+  const syncError = useSessionStore((state) => state.syncError)
+
   const [freezerName, setFreezerName] = useState('')
   const [nameEditing, setNameEditing] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('#007AFF')
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
 
   useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault()
-      setInstallPrompt(e as BeforeInstallPromptEvent)
+    const handler = (event: Event) => {
+      event.preventDefault()
+      setInstallPrompt(event as BeforeInstallPromptEvent)
     }
+
     window.addEventListener('beforeinstallprompt', handler)
     return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
@@ -46,6 +73,7 @@ export default function SettingsPage() {
   const handleSaveName = async () => {
     if (freezer && freezerName.trim()) {
       await updateFreezer(freezer.id, { name: freezerName.trim() })
+      await synchronizeHousehold()
     }
     setNameEditing(false)
   }
@@ -57,70 +85,112 @@ export default function SettingsPage() {
     setLastExportAt()
   }
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
     if (!file) return
+
     const text = await file.text()
+
     try {
       await importData(text)
-      alert('Import erfolgreich!')
+      await synchronizeHousehold()
+      alert('Import erfolgreich.')
     } catch {
-      alert('Fehler beim Import. Bitte prüfe die Datei.')
+      alert('Fehler beim Import. Bitte pruefe die Datei.')
     }
-    e.target.value = ''
+
+    event.target.value = ''
   }
 
   const handleClearAll = async () => {
-    await db.transaction('rw', [db.freezers, db.drawers, db.items, db.tags], async () => {
-      await db.items.clear()
-      await db.drawers.clear()
-      await db.freezers.clear()
-      await db.tags.clear()
-    })
+    await resetHouseholdData()
     setShowClearConfirm(false)
-    // Re-seed
-    const { initializeDatabase } = await import('../db/seed')
-    await initializeDatabase()
+
+    try {
+      await synchronizeHousehold()
+    } catch {
+      // Pending changes stay local and will sync later.
+    }
   }
 
   const handleCacheReset = async () => {
-    // 1. Alle Caches löschen
     if ('caches' in window) {
       const cacheNames = await caches.keys()
-      await Promise.all(cacheNames.map(name => caches.delete(name)))
+      await Promise.all(cacheNames.map((name) => caches.delete(name)))
     }
 
-    // 2. Service Worker deregistrieren
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations()
-      await Promise.all(registrations.map(reg => reg.unregister()))
+      await Promise.all(registrations.map((registration) => registration.unregister()))
     }
 
-    // 3. Seite komplett neu laden
     window.location.reload()
   }
 
   const handleAddTag = async () => {
     if (!newTagName.trim()) return
+
     try {
       await addTag(newTagName.trim(), newTagColor)
       setNewTagName('')
+      await synchronizeHousehold()
     } catch {
       alert('Tag existiert bereits.')
     }
   }
 
-  const TAG_COLORS = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#AF52DE', '#5AC8FA', '#FF2D55', '#8E8E93']
+  const handleManualSync = async () => {
+    try {
+      await synchronizeHousehold()
+    } catch {
+      alert('Synchronisation fehlgeschlagen. Bitte Verbindung und Supabase-Konfiguration pruefen.')
+    }
+  }
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      await signOutUser()
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
 
   return (
     <Page>
       <Navbar
         title="Einstellungen"
-        left={<NavbarBackLink onClick={() => navigate('/')} text="Zurück" />}
+        left={<NavbarBackLink onClick={() => navigate('/')} text="Zuruck" />}
         className="settings-navbar"
       />
 
-      {/* Freezer Name */}
+      <List strongIos insetIos>
+        <ListItem title={<strong>Konto</strong>} />
+        <ListItem title="E-Mail" after={profile?.email ?? 'Unbekannt'} />
+        <ListItem title="Haushalt" after={household?.name ?? 'Nicht gesetzt'} />
+        <ListItem title="Rolle" after={household?.role ?? 'Kein Zugriff'} />
+        <ListItem
+          title="Abmelden"
+          onClick={handleSignOut}
+          after={isSigningOut ? '...' : undefined}
+          link={!isSigningOut}
+        />
+      </List>
+
+      <List strongIos insetIos>
+        <ListItem title={<strong>Synchronisation</strong>} />
+        <ListItem title="Status" after={isSyncing ? 'Lauft...' : pendingSyncCount ? `${pendingSyncCount} ausstehend` : 'Aktuell'} />
+        <ListItem title="Letzter Sync" after={lastSyncAt ? formatDateTime(lastSyncAt) : 'Noch nie'} />
+        <ListItem title="Offene Konflikte" after={String(conflicts?.length ?? 0)} />
+        {syncError && (
+          <li style={{ padding: '0 16px 12px', color: '#B91C1C', fontSize: 13 }}>
+            {syncError}
+          </li>
+        )}
+        <ListItem link title="Jetzt synchronisieren" onClick={handleManualSync} />
+        <ListItem link title="Konflikte bereinigen" subtitle="Lokale und Cloud-Version vergleichen" onClick={() => navigate('/sync-konflikte')} />
+      </List>
+
       <List strongIos insetIos>
         <ListItem
           title="Gefrierschrank-Name"
@@ -144,13 +214,12 @@ export default function SettingsPage() {
           <ListInput
             type="text"
             value={freezerName}
-            onInput={(e: React.ChangeEvent<HTMLInputElement>) => setFreezerName(e.target.value)}
+            onInput={(event: React.ChangeEvent<HTMLInputElement>) => setFreezerName(event.target.value)}
             placeholder="Name eingeben"
           />
         )}
       </List>
 
-      {/* Tags */}
       <List strongIos insetIos>
         <ListItem title={<strong>Tags verwalten</strong>} />
         {(tags ?? []).map((tag) => (
@@ -169,7 +238,14 @@ export default function SettingsPage() {
             }
             after={
               <button
-                onClick={() => deleteTag(tag.id)}
+                onClick={async () => {
+                  await deleteTag(tag.id)
+                  try {
+                    await synchronizeHousehold()
+                  } catch {
+                    // Keep local pending deletion.
+                  }
+                }}
                 style={{
                   background: 'none',
                   border: 'none',
@@ -178,7 +254,7 @@ export default function SettingsPage() {
                   fontSize: 14,
                 }}
               >
-                Löschen
+                Loschen
               </button>
             }
           />
@@ -188,7 +264,7 @@ export default function SettingsPage() {
             <input
               type="text"
               value={newTagName}
-              onChange={(e) => setNewTagName(e.target.value)}
+              onChange={(event) => setNewTagName(event.target.value)}
               placeholder="Neuer Tag"
               style={{
                 flex: 1,
@@ -200,16 +276,16 @@ export default function SettingsPage() {
               }}
             />
             <div style={{ display: 'flex', gap: 4 }}>
-              {TAG_COLORS.map(c => (
+              {TAG_COLORS.map((color) => (
                 <div
-                  key={c}
-                  onClick={() => setNewTagColor(c)}
+                  key={color}
+                  onClick={() => setNewTagColor(color)}
                   style={{
                     width: 24,
                     height: 24,
                     borderRadius: '50%',
-                    backgroundColor: c,
-                    border: newTagColor === c ? '2px solid #000' : '2px solid transparent',
+                    backgroundColor: color,
+                    border: newTagColor === color ? '2px solid #000' : '2px solid transparent',
                     cursor: 'pointer',
                   }}
                 />
@@ -220,37 +296,28 @@ export default function SettingsPage() {
         </li>
       </List>
 
-      {/* Data Management */}
       <List strongIos insetIos>
         <ListItem title={<strong>Daten</strong>} />
+        <ListItem link title="Daten exportieren" onClick={handleExport} after="JSON" />
+        <ListItem link title="Daten importieren" onClick={() => fileInputRef.current?.click()} />
         <ListItem
           link
-          title="Daten exportieren"
-          onClick={handleExport}
-          after="JSON"
-        />
-        <ListItem
-          link
-          title="Daten importieren"
-          onClick={() => fileInputRef.current?.click()}
-        />
-        <ListItem
-          link
-          title={<span style={{ color: '#FF3B30' }}>Alle Daten löschen</span>}
+          title={<span style={{ color: '#FF3B30' }}>Haushalt zurucksetzen</span>}
+          subtitle="Setzt den gemeinsamen Bestand fur alle Mitglieder auf den Startzustand"
           onClick={() => setShowClearConfirm(true)}
         />
         {installPrompt && (
           <ListItem
             link
             title="App installieren"
-            subtitle="Als App auf dem Gerät installieren"
+            subtitle="Als App auf dem Gerat installieren"
             onClick={handleInstall}
           />
         )}
         <ListItem
           link
           title="App aktualisieren"
-          subtitle="Cache & Service Worker zurücksetzen"
+          subtitle="Cache und Service Worker zurucksetzen"
           onClick={() => setShowResetConfirm(true)}
         />
       </List>
@@ -263,15 +330,15 @@ export default function SettingsPage() {
         style={{ display: 'none' }}
       />
 
-      <div style={{ textAlign: 'center', padding: '24px', color: '#AEAEB2', fontSize: 13 }}>
-        Gefrierschrank Tracker v1.0
+      <div style={{ textAlign: 'center', padding: '24px', color: '#94A3B8', fontSize: 13 }}>
+        Gefrierschrank Tracker mit Supabase-Sync
       </div>
 
       <Dialog
         opened={showResetConfirm}
         onBackdropClick={() => setShowResetConfirm(false)}
         title="App aktualisieren?"
-        content="Der Service Worker und alle Caches werden gelöscht. Deine Daten bleiben erhalten. Die App wird danach neu geladen."
+        content="Der Service Worker und alle Caches werden geloescht. Deine lokalen Daten bleiben erhalten. Die App wird danach neu geladen."
         buttons={
           <>
             <DialogButton onClick={() => setShowResetConfirm(false)}>Abbrechen</DialogButton>
@@ -285,19 +352,26 @@ export default function SettingsPage() {
       <Dialog
         opened={showClearConfirm}
         onBackdropClick={() => setShowClearConfirm(false)}
-        title="Alle Daten löschen?"
-        content="Alle Gefrierschränke, Fächer, Artikel und Tags werden unwiderruflich gelöscht. Die App wird auf Werkseinstellungen zurückgesetzt."
+        title="Haushalt zurucksetzen?"
+        content="Alle Gefrierschraenke, Faecher, Artikel und Tags werden fuer den gemeinsamen Haushalt entfernt und mit einem frischen Startbestand ersetzt."
         buttons={
           <>
             <DialogButton onClick={() => setShowClearConfirm(false)}>
               Abbrechen
             </DialogButton>
             <DialogButton strong onClick={handleClearAll} className="text-red-500">
-              Alles löschen
+              Zurucksetzen
             </DialogButton>
           </>
         }
       />
     </Page>
   )
+}
+
+function formatDateTime(date: Date) {
+  return date.toLocaleString('de-AT', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
 }
