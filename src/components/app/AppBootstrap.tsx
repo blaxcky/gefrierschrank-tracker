@@ -5,6 +5,7 @@ import { initializeDatabase } from '../../db/seed'
 import { resolveSessionContext } from '../../services/authService'
 import { clearLocalData, hydrateSyncStateFromDatabase, synchronizeHousehold } from '../../services/syncService'
 import { useSessionStore } from '../../store/useSessionStore'
+import { isLocalOnlyPreferred, setLocalOnlyPreferred } from '../../utils/localMode'
 
 export default function AppBootstrap({ children }: PropsWithChildren) {
   const setConfigured = useSessionStore((state) => state.setConfigured)
@@ -19,11 +20,29 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
       if (!isActive) return
 
       if (!session) {
+        if (isSupabaseConfigured && isLocalOnlyPreferred()) {
+          await initializeDatabase()
+          if (!isActive) return
+          setSession({
+            status: 'local_only',
+            user: null,
+            profile: null,
+            household: null,
+          })
+          setSyncState({
+            isSyncing: false,
+            syncError: null,
+            lastSyncAt: null,
+          })
+          return
+        }
+
         reset('signed_out')
         return
       }
 
       try {
+        setLocalOnlyPreferred(false)
         const context = await resolveSessionContext(session)
         if (!isActive) return
 
@@ -65,6 +84,7 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
     setConfigured(isSupabaseConfigured)
 
     if (!isSupabaseConfigured || !supabase) {
+      setLocalOnlyPreferred(true)
       void initializeDatabase().then(() => {
         if (!isActive) return
         setSession({

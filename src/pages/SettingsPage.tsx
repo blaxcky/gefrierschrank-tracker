@@ -25,6 +25,7 @@ import { exportData, importData, downloadJson, setLastExportAt } from '../utils/
 import { resetHouseholdData } from '../services/syncService'
 import { signOutUser } from '../services/authService'
 import { useSessionStore } from '../store/useSessionStore'
+import { setLocalOnlyPreferred } from '../utils/localMode'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -158,6 +159,21 @@ export default function SettingsPage() {
     }
   }
 
+  const handleSwitchToAccountMode = () => {
+    setLocalOnlyPreferred(false)
+    useSessionStore.getState().setSession({
+      status: 'signed_out',
+      user: null,
+      profile: null,
+      household: null,
+    })
+    useSessionStore.getState().setSyncState({
+      isSyncing: false,
+      syncError: null,
+      lastSyncAt: null,
+    })
+  }
+
   return (
     <Page>
       <Navbar
@@ -183,6 +199,21 @@ export default function SettingsPage() {
           <div style={{ fontSize: 13, lineHeight: 1.5 }}>
             Die App ist voll nutzbar, speichert aber nur auf diesem Geraet. Login, Cloud-Sync und Konfliktbereinigung werden aktiv, sobald Supabase konfiguriert ist.
           </div>
+          <button
+            onClick={handleSwitchToAccountMode}
+            style={{
+              marginTop: 12,
+              border: 'none',
+              borderRadius: 10,
+              padding: '10px 12px',
+              background: '#166534',
+              color: 'white',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Mit Konto anmelden
+          </button>
         </div>
       ) : (
         <>

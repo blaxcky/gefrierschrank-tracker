@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { Button, Page } from 'konsta/react'
+import { initializeDatabase } from '../db/seed'
 import { signInWithPassword, signUpWithPassword } from '../services/authService'
+import { useSessionStore } from '../store/useSessionStore'
+import { setLocalOnlyPreferred } from '../utils/localMode'
 
 type AuthMode = 'login' | 'register'
 
 export default function AuthPage() {
+  const setSession = useSessionStore((state) => state.setSession)
+  const setSyncState = useSessionStore((state) => state.setSyncState)
   const [mode, setMode] = useState<AuthMode>('login')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
@@ -14,6 +19,22 @@ export default function AuthPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isLogin = mode === 'login'
+
+  const handleEnterLocalMode = async () => {
+    setLocalOnlyPreferred(true)
+    await initializeDatabase()
+    setSession({
+      status: 'local_only',
+      user: null,
+      profile: null,
+      household: null,
+    })
+    setSyncState({
+      isSyncing: false,
+      syncError: null,
+      lastSyncAt: null,
+    })
+  }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -174,6 +195,27 @@ export default function AuthPage() {
               {isSubmitting ? 'Bitte warten...' : isLogin ? 'Anmelden' : 'Konto anlegen'}
             </Button>
           </form>
+
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #E2E8F0' }}>
+            <button
+              onClick={() => { void handleEnterLocalMode() }}
+              style={{
+                width: '100%',
+                border: '1px solid #CBD5E1',
+                borderRadius: 14,
+                padding: '12px 14px',
+                background: '#F8FAFC',
+                color: '#334155',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Ohne Konto lokal nutzen
+            </button>
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: '#64748B', lineHeight: 1.45 }}>
+              Die App bleibt voll nutzbar, speichert dann aber nur auf diesem Gerät.
+            </p>
+          </div>
         </div>
       </div>
     </Page>
