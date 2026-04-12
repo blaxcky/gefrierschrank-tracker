@@ -5,6 +5,7 @@ interface ConfirmDialogProps {
   title: string
   content: string
   confirmText?: string
+  centered?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
@@ -14,6 +15,7 @@ export default function ConfirmDialog({
   title,
   content,
   confirmText = 'Löschen',
+  centered,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
@@ -22,7 +24,7 @@ export default function ConfirmDialog({
       opened={opened}
       onBackdropClick={onCancel}
       title={title}
-      content={content}
+      content={centered ? <div style={{ textAlign: 'center' }}>{content}</div> : content}
       buttons={
         <>
           <DialogButton onClick={onCancel}>Abbrechen</DialogButton>

@@ -250,6 +250,7 @@ export default function RemoveQuantitySheet({ opened, onClose, item }: RemoveQua
         title="Alle entnommen"
         content={`"${item.name}" wurde komplett entnommen. Artikel löschen?`}
         confirmText="Löschen"
+        centered
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
       />
