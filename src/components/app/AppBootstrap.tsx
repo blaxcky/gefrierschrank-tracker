@@ -2,7 +2,7 @@ import { type PropsWithChildren, useEffect } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../../lib/supabase'
 import { initializeDatabase } from '../../db/seed'
-import { resolveSessionContext } from '../../services/authService'
+import { getFriendlyAuthSetupError, resolveSessionContext } from '../../services/authService'
 import { clearLocalData, hydrateSyncStateFromDatabase, synchronizeHousehold } from '../../services/syncService'
 import { useSessionStore } from '../../store/useSessionStore'
 import { isLocalOnlyPreferred, setLocalOnlyPreferred } from '../../utils/localMode'
@@ -10,6 +10,7 @@ import { isLocalOnlyPreferred, setLocalOnlyPreferred } from '../../utils/localMo
 export default function AppBootstrap({ children }: PropsWithChildren) {
   const setConfigured = useSessionStore((state) => state.setConfigured)
   const setSession = useSessionStore((state) => state.setSession)
+  const setAuthError = useSessionStore((state) => state.setAuthError)
   const reset = useSessionStore((state) => state.reset)
   const setSyncState = useSessionStore((state) => state.setSyncState)
 
@@ -28,6 +29,7 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
             user: null,
             profile: null,
             household: null,
+            authError: null,
           })
           setSyncState({
             isSyncing: false,
@@ -43,6 +45,7 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
 
       try {
         setLocalOnlyPreferred(false)
+        setAuthError(null)
         const context = await resolveSessionContext(session)
         if (!isActive) return
 
@@ -54,6 +57,7 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
             user: context.user,
             profile: context.profile,
             household: null,
+            authError: null,
           })
           return
         }
@@ -63,6 +67,7 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
           user: context.user,
           profile: context.profile,
           household: context.household,
+          authError: null,
         })
 
         await hydrateSyncStateFromDatabase()
@@ -75,8 +80,16 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
         }
       } catch (error) {
         if (!isActive) return
+        setSession({
+          status: 'signed_out',
+          user: null,
+          profile: null,
+          household: null,
+          authError: getFriendlyAuthSetupError(error),
+        })
         setSyncState({
-          syncError: error instanceof Error ? error.message : 'Sitzung konnte nicht geladen werden.',
+          isSyncing: false,
+          syncError: null,
         })
       }
     }
@@ -92,6 +105,7 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
           user: null,
           profile: null,
           household: null,
+          authError: null,
         })
         setSyncState({
           isSyncing: false,
@@ -118,7 +132,7 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
       isActive = false
       subscription.unsubscribe()
     }
-  }, [reset, setConfigured, setSession, setSyncState])
+  }, [reset, setAuthError, setConfigured, setSession, setSyncState])
 
   return <>{children}</>
 }

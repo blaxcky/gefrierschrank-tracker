@@ -113,3 +113,26 @@ export async function resolveSessionContext(session: Session): Promise<SessionCo
     },
   }
 }
+
+export function getFriendlyAuthSetupError(error: unknown) {
+  const message = error instanceof Error ? error.message : 'Unbekannter Fehler beim Laden der Sitzung.'
+  const normalized = message.toLowerCase()
+
+  if (
+    normalized.includes('profiles')
+    || normalized.includes('row-level security')
+    || normalized.includes('violates row-level security policy')
+  ) {
+    return 'Anmeldung hat funktioniert, aber das Profil konnte nicht geladen oder angelegt werden. Prüfe `public.profiles` sowie die zugehörigen RLS-Policies.'
+  }
+
+  if (normalized.includes('household_members')) {
+    return 'Anmeldung hat funktioniert, aber der Zugriff auf `public.household_members` ist fehlgeschlagen. Prüfe Mitgliedschaft und RLS-Policies.'
+  }
+
+  if (normalized.includes('permission denied') || normalized.includes('not allowed')) {
+    return 'Anmeldung hat funktioniert, aber Supabase blockiert den Datenzugriff. Prüfe RLS-Policies und Tabellenrechte für `profiles` und `household_members`.'
+  }
+
+  return `Anmeldung hat funktioniert, aber die Sitzung konnte nicht vorbereitet werden. Prüfe \`public.profiles\`, \`public.household_members\` und die Supabase-Policies. Technischer Hinweis: ${message}`
+}

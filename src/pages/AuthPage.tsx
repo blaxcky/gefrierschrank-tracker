@@ -6,7 +6,9 @@ import { useSessionStore } from '../store/useSessionStore'
 import { setLocalOnlyPreferred } from '../utils/localMode'
 
 export default function AuthPage() {
+  const authError = useSessionStore((state) => state.authError)
   const setSession = useSessionStore((state) => state.setSession)
+  const setAuthError = useSessionStore((state) => state.setAuthError)
   const setSyncState = useSessionStore((state) => state.setSyncState)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,7 +23,9 @@ export default function AuthPage() {
       user: null,
       profile: null,
       household: null,
+      authError: null,
     })
+    setAuthError(null)
     setSyncState({
       isSyncing: false,
       syncError: null,
@@ -38,6 +42,7 @@ export default function AuthPage() {
     }
 
     setIsSubmitting(true)
+    setAuthError(null)
     setError(null)
 
     try {
@@ -136,6 +141,12 @@ export default function AuthPage() {
             {error && (
               <div style={messageStyle('#FEF2F2', '#DC2626')}>
                 {error}
+              </div>
+            )}
+
+            {!error && authError && (
+              <div style={messageStyle('#FEF2F2', '#B91C1C')}>
+                {authError}
               </div>
             )}
 

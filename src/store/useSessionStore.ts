@@ -25,6 +25,7 @@ interface SessionState {
   user: AuthUser | null
   profile: UserProfile | null
   household: Household | null
+  authError: string | null
   isSyncing: boolean
   lastSyncAt: Date | null
   syncError: string | null
@@ -34,7 +35,9 @@ interface SessionState {
     user?: AuthUser | null
     profile?: UserProfile | null
     household?: Household | null
+    authError?: string | null
   }) => void
+  setAuthError: (authError: string | null) => void
   setSyncState: (input: {
     isSyncing?: boolean
     lastSyncAt?: Date | null
@@ -49,6 +52,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   user: null,
   profile: null,
   household: null,
+  authError: null,
   isSyncing: false,
   lastSyncAt: null,
   syncError: null,
@@ -56,12 +60,14 @@ export const useSessionStore = create<SessionState>((set) => ({
     isConfigured: configured,
     status: configured ? 'loading' : 'local_only',
   }),
-  setSession: ({ status, user = null, profile = null, household = null }) => set({
+  setSession: ({ status, user = null, profile = null, household = null, authError = null }) => set({
     status,
     user,
     profile,
     household,
+    authError,
   }),
+  setAuthError: (authError) => set({ authError }),
   setSyncState: ({ isSyncing, lastSyncAt, syncError }) => set((state) => ({
     isSyncing: typeof isSyncing === 'boolean' ? isSyncing : state.isSyncing,
     lastSyncAt: lastSyncAt !== undefined ? lastSyncAt : state.lastSyncAt,
@@ -72,6 +78,7 @@ export const useSessionStore = create<SessionState>((set) => ({
     user: null,
     profile: null,
     household: null,
+    authError: null,
     isSyncing: false,
     lastSyncAt: null,
     syncError: null,
