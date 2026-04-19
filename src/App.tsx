@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { App as KonstaApp } from 'konsta/react'
 import FreezerViewPage from './pages/FreezerViewPage'
 import DrawerViewPage from './pages/DrawerViewPage'
@@ -31,6 +31,7 @@ function App() {
             <Route path="/lagerdauer" element={<FrozenDurationPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/sync-konflikte" element={<SyncConflictsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         )}
       </HashRouter>
