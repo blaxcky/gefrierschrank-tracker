@@ -4,12 +4,17 @@ import { VitePWA } from 'vite-plugin-pwa'
 import tailwindcss from '@tailwindcss/vite'
 
 function normalizeBase(input: string): string {
-  const trimmed = (input || '/').trim()
-  if (!trimmed || trimmed === '.') return '/'
+  const trimmed = (input || './').trim()
+  if (!trimmed || trimmed === '.') return './'
+  if (trimmed === './' || trimmed === '.\\') return './'
 
   // Guard against shell path rewriting (e.g. Git Bash on Windows) or URLs.
   if (trimmed.includes('\\') || trimmed.includes('://') || /^[A-Za-z]:/.test(trimmed)) {
-    return '/'
+    return './'
+  }
+
+  if (trimmed.startsWith('./')) {
+    return './'
   }
 
   const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
@@ -18,7 +23,7 @@ function normalizeBase(input: string): string {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const base = normalizeBase(env.VITE_BASE || '/')
+  const base = normalizeBase(env.VITE_BASE || './')
 
   return {
     base,
