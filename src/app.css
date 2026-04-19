@@ -497,16 +497,64 @@ html, body, #root {
   background: #F2F2F7 !important;
 }
 
-.settings-icon-btn:focus-visible {
+.topbar-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  line-height: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.topbar-icon-btn:focus-visible {
   outline: 2px solid #007AFF !important;
   outline-offset: 2px;
 }
 
 .settings-icon-btn {
-  -webkit-tap-highlight-color: transparent;
-  transition: opacity 0.15s ease;
+  background: transparent;
 }
 
-.settings-icon-btn:active {
+.topbar-icon-btn:active {
   opacity: 0.55;
+  transform: scale(0.96);
+}
+
+.sync-status-btn {
+  color: white;
+}
+
+.sync-status-btn.sync-ok {
+  background: #16A34A;
+}
+
+.sync-status-btn.sync-pending {
+  background: #DC2626;
+}
+
+.sync-status-btn.sync-active svg {
+  animation: sync-button-spin 1s linear infinite;
+}
+
+@keyframes sync-button-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -40,6 +40,7 @@ export default function SettingsPage() {
   const conflicts = useSyncConflicts()
   const pendingSyncCount = usePendingSyncCount()
   const status = useSessionStore((state) => state.status)
+  const user = useSessionStore((state) => state.user)
   const profile = useSessionStore((state) => state.profile)
   const household = useSessionStore((state) => state.household)
   const lastSyncAt = useSessionStore((state) => state.lastSyncAt)
@@ -95,11 +96,25 @@ export default function SettingsPage() {
     const text = await file.text()
 
     try {
-      await importData(text)
+      if (isLocalOnly) {
+        await importData(text, { mode: 'local' })
+      } else {
+        if (!user || !household) {
+          throw new Error('Bitte zuerst anmelden.')
+        }
+
+        await importData(text, {
+          mode: 'household',
+          householdId: household.id,
+          userId: user.id,
+          conflictPolicy: 'import_wins',
+        })
+      }
+
       await synchronizeHousehold()
       alert('Import erfolgreich.')
-    } catch {
-      alert('Fehler beim Import. Bitte pruefe die Datei.')
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Fehler beim Import. Bitte pruefe die Datei.')
     }
 
     event.target.value = ''

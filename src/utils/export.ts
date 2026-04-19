@@ -1,14 +1,31 @@
-import { db, type Freezer, type Drawer, type Item, type Tag } from '../db/database'
+import { db, type Drawer, type Freezer, type Item, type SyncEntityBase, type SyncStatus, type Tag } from '../db/database'
 
 const LAST_EXPORT_AT_KEY = 'gefrierschrank:last-export-at'
 const DAY_MS = 24 * 60 * 60 * 1000
 const EXPORT_REMINDER_DAYS = 7
+const IMPORT_CONFLICT_POLICY = 'import_wins'
 
 export interface ExportReminderInfo {
   shouldShow: boolean
   lastExportAt: Date | null
   daysSinceLastExport: number | null
   maxAgeDays: number
+}
+
+type ImportMode = 'local' | 'household'
+
+interface ImportOptions {
+  mode?: ImportMode
+  householdId?: string
+  userId?: string
+  conflictPolicy?: typeof IMPORT_CONFLICT_POLICY
+}
+
+interface ImportPayload {
+  freezers: Record<string, unknown>[]
+  drawers: Record<string, unknown>[]
+  items: Record<string, unknown>[]
+  tags: Record<string, unknown>[]
 }
 
 export async function exportData(): Promise<string> {
@@ -21,71 +38,150 @@ export async function exportData(): Promise<string> {
   return JSON.stringify({ freezers, drawers, items, tags, syncConflicts }, null, 2)
 }
 
-export async function importData(jsonString: string): Promise<void> {
-  const data = JSON.parse(jsonString)
+export async function importData(jsonString: string, options: ImportOptions = {}): Promise<void> {
+  const payload = parseImportPayload(jsonString)
+  const mode = options.mode ?? 'local'
   const now = new Date()
 
-  const normalizeFreezer = (freezer: Record<string, unknown>): Freezer => ({
-    id: String(freezer.id),
-    name: String(freezer.name),
-    order: Number(freezer.order ?? 0),
-    createdAt: new Date(String(freezer.createdAt ?? now.toISOString())),
+  if (mode === 'household') {
+    if (!options.householdId || !options.userId) {
+      throw new Error('Import im Konto-Modus braucht einen aktiven Haushalt.')
+    }
+    if ((options.conflictPolicy ?? IMPORT_CONFLICT_POLICY) !== IMPORT_CONFLICT_POLICY) {
+      throw new Error('Nur die Konfliktregel `import_wins` wird unterstuetzt.')
+    }
+
+    await importHouseholdData(payload, now, options.householdId, options.userId)
+    return
+  }
+
+  await importLocalData(payload, now)
+}
+
+function parseImportPayload(jsonString: string): ImportPayload {
+  let rawData: unknown
+
+  try {
+    rawData = JSON.parse(jsonString)
+  } catch {
+    throw new Error('Importdatei ist kein gueltiges JSON.')
+  }
+
+  if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) {
+    throw new Error('Importdatei hat ein ungueltiges Format.')
+  }
+
+  const data = rawData as Record<string, unknown>
+  const freezers = toRecordArray(data.freezers)
+  const drawers = toRecordArray(data.drawers)
+  const items = toRecordArray(data.items)
+  const tags = toRecordArray(data.tags)
+
+  if (freezers.length === 0 && drawers.length === 0 && items.length === 0 && tags.length === 0) {
+    throw new Error('Importdatei enthaelt keine unterstuetzten Daten.')
+  }
+
+  return { freezers, drawers, items, tags }
+}
+
+function toRecordArray(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry))
+}
+
+function toDate(value: unknown, fallback: Date) {
+  const date = value instanceof Date ? value : new Date(String(value ?? fallback.toISOString()))
+  return Number.isNaN(date.getTime()) ? fallback : date
+}
+
+function toNumber(value: unknown, fallback: number) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function toSyncStatus(value: unknown): SyncStatus {
+  return value === 'pending' || value === 'conflict' ? value : 'synced'
+}
+
+function normalizeFreezer(freezer: Record<string, unknown>, now: Date): Freezer {
+  const createdAt = toDate(freezer.createdAt, now)
+  return {
+    id: String(freezer.id ?? crypto.randomUUID()),
+    name: String(freezer.name ?? 'Gefrierschrank'),
+    order: toNumber(freezer.order, 0),
+    createdAt,
     householdId: typeof freezer.householdId === 'string' ? freezer.householdId : null,
-    updatedAt: new Date(String(freezer.updatedAt ?? freezer.createdAt ?? now.toISOString())),
+    updatedAt: toDate(freezer.updatedAt, createdAt),
     updatedBy: typeof freezer.updatedBy === 'string' ? freezer.updatedBy : null,
-    version: Number(freezer.version ?? 1),
-    syncStatus: freezer.syncStatus === 'pending' || freezer.syncStatus === 'conflict' ? freezer.syncStatus : 'synced',
-    lastSyncedVersion: Number(freezer.lastSyncedVersion ?? 0),
-    deletedAt: freezer.deletedAt ? new Date(String(freezer.deletedAt)) : null,
-  })
+    version: Math.max(1, toNumber(freezer.version, 1)),
+    syncStatus: toSyncStatus(freezer.syncStatus),
+    lastSyncedVersion: Math.max(0, toNumber(freezer.lastSyncedVersion, 0)),
+    deletedAt: freezer.deletedAt ? toDate(freezer.deletedAt, now) : null,
+  }
+}
 
-  const normalizeDrawer = (drawer: Record<string, unknown>): Drawer => ({
-    id: String(drawer.id),
-    freezerId: String(drawer.freezerId),
-    name: String(drawer.name),
-    order: Number(drawer.order ?? 0),
+function normalizeDrawer(drawer: Record<string, unknown>, now: Date): Drawer {
+  const createdAt = toDate(drawer.createdAt, now)
+  return {
+    id: String(drawer.id ?? crypto.randomUUID()),
+    freezerId: String(drawer.freezerId ?? ''),
+    name: String(drawer.name ?? 'Fach'),
+    order: toNumber(drawer.order, 0),
     color: String(drawer.color ?? '#007AFF'),
-    createdAt: new Date(String(drawer.createdAt ?? now.toISOString())),
+    createdAt,
     householdId: typeof drawer.householdId === 'string' ? drawer.householdId : null,
-    updatedAt: new Date(String(drawer.updatedAt ?? drawer.createdAt ?? now.toISOString())),
+    updatedAt: toDate(drawer.updatedAt, createdAt),
     updatedBy: typeof drawer.updatedBy === 'string' ? drawer.updatedBy : null,
-    version: Number(drawer.version ?? 1),
-    syncStatus: drawer.syncStatus === 'pending' || drawer.syncStatus === 'conflict' ? drawer.syncStatus : 'synced',
-    lastSyncedVersion: Number(drawer.lastSyncedVersion ?? 0),
-    deletedAt: drawer.deletedAt ? new Date(String(drawer.deletedAt)) : null,
-  })
+    version: Math.max(1, toNumber(drawer.version, 1)),
+    syncStatus: toSyncStatus(drawer.syncStatus),
+    lastSyncedVersion: Math.max(0, toNumber(drawer.lastSyncedVersion, 0)),
+    deletedAt: drawer.deletedAt ? toDate(drawer.deletedAt, now) : null,
+  }
+}
 
-  const normalizeItem = (item: Record<string, unknown>): Item => ({
-    id: String(item.id),
-    drawerId: String(item.drawerId),
-    name: String(item.name),
-    quantity: Number(item.quantity ?? 1),
-    unit: String(item.unit ?? 'Stück'),
+function normalizeItem(item: Record<string, unknown>, now: Date): Item {
+  const dateAdded = toDate(item.dateAdded, now)
+  return {
+    id: String(item.id ?? crypto.randomUUID()),
+    drawerId: String(item.drawerId ?? ''),
+    name: String(item.name ?? 'Artikel'),
+    quantity: toNumber(item.quantity, 1),
+    unit: String(item.unit ?? 'Stueck'),
     tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
     notes: typeof item.notes === 'string' ? item.notes : '',
-    dateAdded: new Date(String(item.dateAdded ?? now.toISOString())),
+    dateAdded,
     householdId: typeof item.householdId === 'string' ? item.householdId : null,
-    updatedAt: new Date(String(item.updatedAt ?? item.dateAdded ?? now.toISOString())),
+    updatedAt: toDate(item.updatedAt, dateAdded),
     updatedBy: typeof item.updatedBy === 'string' ? item.updatedBy : null,
-    version: Number(item.version ?? 1),
-    syncStatus: item.syncStatus === 'pending' || item.syncStatus === 'conflict' ? item.syncStatus : 'synced',
-    lastSyncedVersion: Number(item.lastSyncedVersion ?? 0),
-    deletedAt: item.deletedAt ? new Date(String(item.deletedAt)) : null,
-  })
+    version: Math.max(1, toNumber(item.version, 1)),
+    syncStatus: toSyncStatus(item.syncStatus),
+    lastSyncedVersion: Math.max(0, toNumber(item.lastSyncedVersion, 0)),
+    deletedAt: item.deletedAt ? toDate(item.deletedAt, now) : null,
+  }
+}
 
-  const normalizeTag = (tag: Record<string, unknown>): Tag => ({
-    id: String(tag.id),
-    name: String(tag.name),
+function normalizeTag(tag: Record<string, unknown>, now: Date): Tag {
+  const createdAt = toDate(tag.createdAt, now)
+  return {
+    id: String(tag.id ?? crypto.randomUUID()),
+    name: String(tag.name ?? 'Tag'),
     color: String(tag.color ?? '#007AFF'),
-    createdAt: new Date(String(tag.createdAt ?? now.toISOString())),
+    createdAt,
     householdId: typeof tag.householdId === 'string' ? tag.householdId : null,
-    updatedAt: new Date(String(tag.updatedAt ?? tag.createdAt ?? now.toISOString())),
+    updatedAt: toDate(tag.updatedAt, createdAt),
     updatedBy: typeof tag.updatedBy === 'string' ? tag.updatedBy : null,
-    version: Number(tag.version ?? 1),
-    syncStatus: tag.syncStatus === 'pending' || tag.syncStatus === 'conflict' ? tag.syncStatus : 'synced',
-    lastSyncedVersion: Number(tag.lastSyncedVersion ?? 0),
-    deletedAt: tag.deletedAt ? new Date(String(tag.deletedAt)) : null,
-  })
+    version: Math.max(1, toNumber(tag.version, 1)),
+    syncStatus: toSyncStatus(tag.syncStatus),
+    lastSyncedVersion: Math.max(0, toNumber(tag.lastSyncedVersion, 0)),
+    deletedAt: tag.deletedAt ? toDate(tag.deletedAt, now) : null,
+  }
+}
+
+async function importLocalData(payload: ImportPayload, now: Date) {
+  const freezers = payload.freezers.map((freezer) => normalizeFreezer(freezer, now))
+  const drawers = payload.drawers.map((drawer) => normalizeDrawer(drawer, now))
+  const items = payload.items.map((item) => normalizeItem(item, now))
+  const tags = payload.tags.map((tag) => normalizeTag(tag, now))
 
   await db.transaction('rw', [db.freezers, db.drawers, db.items, db.tags, db.syncConflicts], async () => {
     await db.freezers.clear()
@@ -94,20 +190,147 @@ export async function importData(jsonString: string): Promise<void> {
     await db.tags.clear()
     await db.syncConflicts.clear()
 
-    if (Array.isArray(data.freezers)) {
-      await db.freezers.bulkAdd(data.freezers.map((freezer: Record<string, unknown>) => normalizeFreezer(freezer)))
+    if (freezers.length > 0) {
+      await db.freezers.bulkAdd(freezers)
     }
-    if (Array.isArray(data.drawers)) {
-      await db.drawers.bulkAdd(data.drawers.map((drawer: Record<string, unknown>) => normalizeDrawer(drawer)))
+    if (drawers.length > 0) {
+      await db.drawers.bulkAdd(drawers)
     }
-    if (data.items) {
-      const items: Item[] = data.items.map((item: Record<string, unknown>) => normalizeItem(item))
+    if (items.length > 0) {
       await db.items.bulkAdd(items)
     }
-    if (Array.isArray(data.tags)) {
-      await db.tags.bulkAdd(data.tags.map((tag: Record<string, unknown>) => normalizeTag(tag)))
+    if (tags.length > 0) {
+      await db.tags.bulkAdd(tags)
     }
   })
+}
+
+function buildPendingImportEntity<T extends SyncEntityBase>(
+  entity: T,
+  existingEntity: T | undefined,
+  householdId: string,
+  userId: string,
+  now: Date,
+): T {
+  const lastSyncedVersion = existingEntity?.lastSyncedVersion ?? 0
+  const nextVersion = existingEntity
+    ? Math.max(existingEntity.version, entity.version, lastSyncedVersion) + 1
+    : Math.max(entity.version, 1)
+
+  return {
+    ...entity,
+    householdId,
+    updatedAt: now,
+    updatedBy: userId,
+    version: nextVersion,
+    syncStatus: 'pending',
+    lastSyncedVersion,
+  }
+}
+
+async function importHouseholdData(payload: ImportPayload, now: Date, householdId: string, userId: string) {
+  const importedFreezers = payload.freezers.map((freezer) => normalizeFreezer(freezer, now))
+  const importedDrawers = payload.drawers.map((drawer) => normalizeDrawer(drawer, now))
+  const importedItems = payload.items.map((item) => normalizeItem(item, now))
+  const importedTags = payload.tags.map((tag) => normalizeTag(tag, now))
+
+  await db.transaction('rw', [db.freezers, db.drawers, db.items, db.tags, db.syncConflicts], async () => {
+    const [existingFreezers, existingDrawers, existingItems, existingTags] = await Promise.all([
+      db.freezers.where('householdId').equals(householdId).toArray(),
+      db.drawers.where('householdId').equals(householdId).toArray(),
+      db.items.where('householdId').equals(householdId).toArray(),
+      db.tags.where('householdId').equals(householdId).toArray(),
+    ])
+
+    const freezerById = new Map(existingFreezers.map((freezer) => [freezer.id, freezer]))
+    const drawerById = new Map(existingDrawers.map((drawer) => [drawer.id, drawer]))
+    const itemById = new Map(existingItems.map((item) => [item.id, item]))
+    const tagById = new Map(existingTags.map((tag) => [tag.id, tag]))
+    const visibleTagByName = new Map(
+      existingTags
+        .filter((tag) => tag.deletedAt === null)
+        .map((tag) => [tag.name.trim().toLowerCase(), tag]),
+    )
+
+    const freezersToPut = importedFreezers.map((freezer) => buildPendingImportEntity(freezer, freezerById.get(freezer.id), householdId, userId, now))
+    const drawersToPut = importedDrawers.map((drawer) => buildPendingImportEntity(drawer, drawerById.get(drawer.id), householdId, userId, now))
+    const itemsToPut = importedItems.map((item) => buildPendingImportEntity(item, itemById.get(item.id), householdId, userId, now))
+    const tagsToPut = new Map<string, Tag>()
+    const tagsToDelete = new Map<string, Tag>()
+
+    for (const tag of importedTags) {
+      const normalizedName = tag.name.trim().toLowerCase()
+      const existingById = tagById.get(tag.id)
+      const existingByName = normalizedName ? visibleTagByName.get(normalizedName) : undefined
+
+      let targetId = tag.id
+      let targetExisting = existingById
+
+      if (!existingById && existingByName && existingByName.id !== tag.id) {
+        targetId = existingByName.id
+        targetExisting = existingByName
+      }
+
+      const preparedTag = buildPendingImportEntity(
+        { ...tag, id: targetId },
+        targetExisting,
+        householdId,
+        userId,
+        now,
+      )
+
+      tagsToPut.set(preparedTag.id, preparedTag)
+      tagById.set(preparedTag.id, preparedTag)
+
+      if (normalizedName) {
+        const duplicateTag = visibleTagByName.get(normalizedName)
+        visibleTagByName.set(normalizedName, preparedTag)
+
+        if (duplicateTag && duplicateTag.id !== preparedTag.id) {
+          tagsToDelete.set(duplicateTag.id, markEntityDeletedForImport(duplicateTag, householdId, userId, now))
+        }
+      }
+    }
+
+    await db.syncConflicts.where('householdId').equals(householdId).delete()
+
+    if (freezersToPut.length > 0) {
+      await db.freezers.bulkPut(freezersToPut)
+    }
+    if (drawersToPut.length > 0) {
+      await db.drawers.bulkPut(drawersToPut)
+    }
+    if (itemsToPut.length > 0) {
+      await db.items.bulkPut(itemsToPut)
+    }
+    if (tagsToDelete.size > 0) {
+      await db.tags.bulkPut(Array.from(tagsToDelete.values()))
+    }
+    if (tagsToPut.size > 0) {
+      await db.tags.bulkPut(Array.from(tagsToPut.values()))
+    }
+  })
+}
+
+function markEntityDeletedForImport<T extends SyncEntityBase>(
+  entity: T,
+  householdId: string,
+  userId: string,
+  now: Date,
+): T {
+  const lastSyncedVersion = entity.lastSyncedVersion
+  const nextVersion = Math.max(entity.version, lastSyncedVersion) + 1
+
+  return {
+    ...entity,
+    householdId,
+    updatedAt: now,
+    updatedBy: userId,
+    version: nextVersion,
+    syncStatus: 'pending',
+    lastSyncedVersion,
+    deletedAt: now,
+  }
 }
 
 export function downloadJson(content: string, filename: string) {
