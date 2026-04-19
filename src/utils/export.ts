@@ -28,6 +28,13 @@ interface ImportPayload {
   tags: Record<string, unknown>[]
 }
 
+interface NormalizedImportSnapshot {
+  freezers: Freezer[]
+  drawers: Drawer[]
+  items: Item[]
+  tags: Tag[]
+}
+
 export async function exportData(): Promise<string> {
   const freezers = await db.freezers.toArray()
   const drawers = await db.drawers.toArray()
@@ -42,6 +49,9 @@ export async function importData(jsonString: string, options: ImportOptions = {}
   const payload = parseImportPayload(jsonString)
   const mode = options.mode ?? 'local'
   const now = new Date()
+  const snapshot = normalizeImportSnapshot(payload, now)
+
+  validateImportSnapshot(snapshot)
 
   if (mode === 'household') {
     if (!options.householdId || !options.userId) {
@@ -51,11 +61,11 @@ export async function importData(jsonString: string, options: ImportOptions = {}
       throw new Error('Nur die Konfliktregel `import_wins` wird unterstuetzt.')
     }
 
-    await importHouseholdData(payload, now, options.householdId, options.userId)
+    await importHouseholdData(snapshot, now, options.householdId, options.userId)
     return
   }
 
-  await importLocalData(payload, now)
+  await importLocalData(snapshot)
 }
 
 function parseImportPayload(jsonString: string): ImportPayload {
@@ -203,12 +213,41 @@ function normalizeTag(tag: Record<string, unknown>, now: Date): Tag {
   }
 }
 
-async function importLocalData(payload: ImportPayload, now: Date) {
-  const freezers = payload.freezers.map((freezer) => normalizeFreezer(freezer, now))
-  const drawers = payload.drawers.map((drawer) => normalizeDrawer(drawer, now))
-  const items = payload.items.map((item) => normalizeItem(item, now))
-  const tags = payload.tags.map((tag) => normalizeTag(tag, now))
+function normalizeImportSnapshot(payload: ImportPayload, now: Date): NormalizedImportSnapshot {
+  return {
+    freezers: payload.freezers.map((freezer) => normalizeFreezer(freezer, now)),
+    drawers: payload.drawers.map((drawer) => normalizeDrawer(drawer, now)),
+    items: payload.items.map((item) => normalizeItem(item, now)),
+    tags: payload.tags.map((tag) => normalizeTag(tag, now)),
+  }
+}
 
+function isActiveEntity(entity: SyncEntityBase) {
+  return entity.deletedAt === null
+}
+
+function validateImportSnapshot(snapshot: NormalizedImportSnapshot) {
+  const activeFreezers = snapshot.freezers.filter(isActiveEntity)
+  const activeDrawers = snapshot.drawers.filter(isActiveEntity)
+  const activeItems = snapshot.items.filter(isActiveEntity)
+
+  const activeFreezerIds = new Set(activeFreezers.map((freezer) => freezer.id))
+  const activeDrawerIds = new Set(activeDrawers.map((drawer) => drawer.id))
+
+  for (const drawer of activeDrawers) {
+    if (!drawer.freezerId || !activeFreezerIds.has(drawer.freezerId)) {
+      throw new Error(`Importfehler: Fach "${drawer.name}" referenziert einen unbekannten Gefrierschrank.`)
+    }
+  }
+
+  for (const item of activeItems) {
+    if (!item.drawerId || !activeDrawerIds.has(item.drawerId)) {
+      throw new Error(`Importfehler: Artikel "${item.name}" referenziert ein unbekanntes Fach.`)
+    }
+  }
+}
+
+async function importLocalData(snapshot: NormalizedImportSnapshot) {
   await db.transaction('rw', [db.freezers, db.drawers, db.items, db.tags, db.syncConflicts], async () => {
     await db.freezers.clear()
     await db.drawers.clear()
@@ -216,17 +255,17 @@ async function importLocalData(payload: ImportPayload, now: Date) {
     await db.tags.clear()
     await db.syncConflicts.clear()
 
-    if (freezers.length > 0) {
-      await db.freezers.bulkAdd(freezers)
+    if (snapshot.freezers.length > 0) {
+      await db.freezers.bulkAdd(snapshot.freezers)
     }
-    if (drawers.length > 0) {
-      await db.drawers.bulkAdd(drawers)
+    if (snapshot.drawers.length > 0) {
+      await db.drawers.bulkAdd(snapshot.drawers)
     }
-    if (items.length > 0) {
-      await db.items.bulkAdd(items)
+    if (snapshot.items.length > 0) {
+      await db.items.bulkAdd(snapshot.items)
     }
-    if (tags.length > 0) {
-      await db.tags.bulkAdd(tags)
+    if (snapshot.tags.length > 0) {
+      await db.tags.bulkAdd(snapshot.tags)
     }
   })
 }
@@ -254,12 +293,7 @@ function buildPendingImportEntity<T extends SyncEntityBase>(
   }
 }
 
-async function importHouseholdData(payload: ImportPayload, now: Date, householdId: string, userId: string) {
-  const importedFreezers = payload.freezers.map((freezer) => normalizeFreezer(freezer, now))
-  const importedDrawers = payload.drawers.map((drawer) => normalizeDrawer(drawer, now))
-  const importedItems = payload.items.map((item) => normalizeItem(item, now))
-  const importedTags = payload.tags.map((tag) => normalizeTag(tag, now))
-
+async function importHouseholdData(snapshot: NormalizedImportSnapshot, now: Date, householdId: string, userId: string) {
   await db.transaction('rw', [db.freezers, db.drawers, db.items, db.tags, db.syncConflicts], async () => {
     const [existingFreezers, existingDrawers, existingItems, existingTags] = await Promise.all([
       db.freezers.where('householdId').equals(householdId).toArray(),
@@ -272,10 +306,10 @@ async function importHouseholdData(payload: ImportPayload, now: Date, householdI
     const drawerById = new Map(existingDrawers.map((drawer) => [drawer.id, drawer]))
     const itemById = new Map(existingItems.map((item) => [item.id, item]))
     const tagById = new Map(existingTags.map((tag) => [tag.id, tag]))
-    const freezersToPut = importedFreezers.map((freezer) => buildPendingImportEntity(freezer, freezerById.get(freezer.id), householdId, userId, now))
-    const drawersToPut = importedDrawers.map((drawer) => buildPendingImportEntity(drawer, drawerById.get(drawer.id), householdId, userId, now))
-    const itemsToPut = importedItems.map((item) => buildPendingImportEntity(item, itemById.get(item.id), householdId, userId, now))
-    const tagsToPut = importedTags.map((tag) => buildPendingImportEntity(tag, tagById.get(tag.id), householdId, userId, now))
+    const freezersToPut = snapshot.freezers.map((freezer) => buildPendingImportEntity(freezer, freezerById.get(freezer.id), householdId, userId, now))
+    const drawersToPut = snapshot.drawers.map((drawer) => buildPendingImportEntity(drawer, drawerById.get(drawer.id), householdId, userId, now))
+    const itemsToPut = snapshot.items.map((item) => buildPendingImportEntity(item, itemById.get(item.id), householdId, userId, now))
+    const tagsToPut = snapshot.tags.map((tag) => buildPendingImportEntity(tag, tagById.get(tag.id), householdId, userId, now))
     const deletedFreezers = existingFreezers
       .filter((freezer) => freezer.deletedAt === null && !freezersToPut.some((imported) => imported.id === freezer.id))
       .map((freezer) => markEntityDeletedForImport(freezer, householdId, userId, now))
