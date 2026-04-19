@@ -246,54 +246,37 @@ async function importHouseholdData(payload: ImportPayload, now: Date, householdI
     const drawerById = new Map(existingDrawers.map((drawer) => [drawer.id, drawer]))
     const itemById = new Map(existingItems.map((item) => [item.id, item]))
     const tagById = new Map(existingTags.map((tag) => [tag.id, tag]))
-    const visibleTagByName = new Map(
-      existingTags
-        .filter((tag) => tag.deletedAt === null)
-        .map((tag) => [tag.name.trim().toLowerCase(), tag]),
-    )
-
     const freezersToPut = importedFreezers.map((freezer) => buildPendingImportEntity(freezer, freezerById.get(freezer.id), householdId, userId, now))
     const drawersToPut = importedDrawers.map((drawer) => buildPendingImportEntity(drawer, drawerById.get(drawer.id), householdId, userId, now))
     const itemsToPut = importedItems.map((item) => buildPendingImportEntity(item, itemById.get(item.id), householdId, userId, now))
-    const tagsToPut = new Map<string, Tag>()
-    const tagsToDelete = new Map<string, Tag>()
-
-    for (const tag of importedTags) {
-      const normalizedName = tag.name.trim().toLowerCase()
-      const existingById = tagById.get(tag.id)
-      const existingByName = normalizedName ? visibleTagByName.get(normalizedName) : undefined
-
-      let targetId = tag.id
-      let targetExisting = existingById
-
-      if (!existingById && existingByName && existingByName.id !== tag.id) {
-        targetId = existingByName.id
-        targetExisting = existingByName
-      }
-
-      const preparedTag = buildPendingImportEntity(
-        { ...tag, id: targetId },
-        targetExisting,
-        householdId,
-        userId,
-        now,
-      )
-
-      tagsToPut.set(preparedTag.id, preparedTag)
-      tagById.set(preparedTag.id, preparedTag)
-
-      if (normalizedName) {
-        const duplicateTag = visibleTagByName.get(normalizedName)
-        visibleTagByName.set(normalizedName, preparedTag)
-
-        if (duplicateTag && duplicateTag.id !== preparedTag.id) {
-          tagsToDelete.set(duplicateTag.id, markEntityDeletedForImport(duplicateTag, householdId, userId, now))
-        }
-      }
-    }
+    const tagsToPut = importedTags.map((tag) => buildPendingImportEntity(tag, tagById.get(tag.id), householdId, userId, now))
+    const deletedFreezers = existingFreezers
+      .filter((freezer) => freezer.deletedAt === null && !freezersToPut.some((imported) => imported.id === freezer.id))
+      .map((freezer) => markEntityDeletedForImport(freezer, householdId, userId, now))
+    const deletedDrawers = existingDrawers
+      .filter((drawer) => drawer.deletedAt === null && !drawersToPut.some((imported) => imported.id === drawer.id))
+      .map((drawer) => markEntityDeletedForImport(drawer, householdId, userId, now))
+    const deletedItems = existingItems
+      .filter((item) => item.deletedAt === null && !itemsToPut.some((imported) => imported.id === item.id))
+      .map((item) => markEntityDeletedForImport(item, householdId, userId, now))
+    const deletedTags = existingTags
+      .filter((tag) => tag.deletedAt === null && !tagsToPut.some((imported) => imported.id === tag.id))
+      .map((tag) => markEntityDeletedForImport(tag, householdId, userId, now))
 
     await db.syncConflicts.where('householdId').equals(householdId).delete()
 
+    if (deletedFreezers.length > 0) {
+      await db.freezers.bulkPut(deletedFreezers)
+    }
+    if (deletedDrawers.length > 0) {
+      await db.drawers.bulkPut(deletedDrawers)
+    }
+    if (deletedItems.length > 0) {
+      await db.items.bulkPut(deletedItems)
+    }
+    if (deletedTags.length > 0) {
+      await db.tags.bulkPut(deletedTags)
+    }
     if (freezersToPut.length > 0) {
       await db.freezers.bulkPut(freezersToPut)
     }
@@ -303,11 +286,8 @@ async function importHouseholdData(payload: ImportPayload, now: Date, householdI
     if (itemsToPut.length > 0) {
       await db.items.bulkPut(itemsToPut)
     }
-    if (tagsToDelete.size > 0) {
-      await db.tags.bulkPut(Array.from(tagsToDelete.values()))
-    }
-    if (tagsToPut.size > 0) {
-      await db.tags.bulkPut(Array.from(tagsToPut.values()))
+    if (tagsToPut.length > 0) {
+      await db.tags.bulkPut(tagsToPut)
     }
   })
 }
