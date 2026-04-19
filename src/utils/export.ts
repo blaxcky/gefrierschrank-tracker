@@ -89,6 +89,16 @@ function toRecordArray(value: unknown): Record<string, unknown>[] {
   return value.filter((entry): entry is Record<string, unknown> => Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry))
 }
 
+function pickFirstDefined(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    if (record[key] !== undefined) {
+      return record[key]
+    }
+  }
+
+  return undefined
+}
+
 function toDate(value: unknown, fallback: Date) {
   const date = value instanceof Date ? value : new Date(String(value ?? fallback.toISOString()))
   return Number.isNaN(date.getTime()) ? fallback : date
@@ -104,76 +114,92 @@ function toSyncStatus(value: unknown): SyncStatus {
 }
 
 function normalizeFreezer(freezer: Record<string, unknown>, now: Date): Freezer {
-  const createdAt = toDate(freezer.createdAt, now)
+  const createdAt = toDate(pickFirstDefined(freezer, ['createdAt', 'created_at']), now)
   return {
-    id: String(freezer.id ?? crypto.randomUUID()),
-    name: String(freezer.name ?? 'Gefrierschrank'),
-    order: toNumber(freezer.order, 0),
+    id: String(pickFirstDefined(freezer, ['id']) ?? crypto.randomUUID()),
+    name: String(pickFirstDefined(freezer, ['name']) ?? 'Gefrierschrank'),
+    order: toNumber(pickFirstDefined(freezer, ['order', 'sort_order']), 0),
     createdAt,
-    householdId: typeof freezer.householdId === 'string' ? freezer.householdId : null,
-    updatedAt: toDate(freezer.updatedAt, createdAt),
-    updatedBy: typeof freezer.updatedBy === 'string' ? freezer.updatedBy : null,
-    version: Math.max(1, toNumber(freezer.version, 1)),
-    syncStatus: toSyncStatus(freezer.syncStatus),
-    lastSyncedVersion: Math.max(0, toNumber(freezer.lastSyncedVersion, 0)),
-    deletedAt: freezer.deletedAt ? toDate(freezer.deletedAt, now) : null,
+    householdId: typeof pickFirstDefined(freezer, ['householdId', 'household_id']) === 'string'
+      ? String(pickFirstDefined(freezer, ['householdId', 'household_id']))
+      : null,
+    updatedAt: toDate(pickFirstDefined(freezer, ['updatedAt', 'updated_at']), createdAt),
+    updatedBy: typeof pickFirstDefined(freezer, ['updatedBy', 'updated_by']) === 'string'
+      ? String(pickFirstDefined(freezer, ['updatedBy', 'updated_by']))
+      : null,
+    version: Math.max(1, toNumber(pickFirstDefined(freezer, ['version']), 1)),
+    syncStatus: toSyncStatus(pickFirstDefined(freezer, ['syncStatus', 'sync_status'])),
+    lastSyncedVersion: Math.max(0, toNumber(pickFirstDefined(freezer, ['lastSyncedVersion', 'last_synced_version']), 0)),
+    deletedAt: pickFirstDefined(freezer, ['deletedAt', 'deleted_at']) ? toDate(pickFirstDefined(freezer, ['deletedAt', 'deleted_at']), now) : null,
   }
 }
 
 function normalizeDrawer(drawer: Record<string, unknown>, now: Date): Drawer {
-  const createdAt = toDate(drawer.createdAt, now)
+  const createdAt = toDate(pickFirstDefined(drawer, ['createdAt', 'created_at']), now)
   return {
-    id: String(drawer.id ?? crypto.randomUUID()),
-    freezerId: String(drawer.freezerId ?? ''),
-    name: String(drawer.name ?? 'Fach'),
-    order: toNumber(drawer.order, 0),
-    color: String(drawer.color ?? '#007AFF'),
+    id: String(pickFirstDefined(drawer, ['id']) ?? crypto.randomUUID()),
+    freezerId: String(pickFirstDefined(drawer, ['freezerId', 'freezer_id']) ?? ''),
+    name: String(pickFirstDefined(drawer, ['name']) ?? 'Fach'),
+    order: toNumber(pickFirstDefined(drawer, ['order', 'sort_order']), 0),
+    color: String(pickFirstDefined(drawer, ['color']) ?? '#007AFF'),
     createdAt,
-    householdId: typeof drawer.householdId === 'string' ? drawer.householdId : null,
-    updatedAt: toDate(drawer.updatedAt, createdAt),
-    updatedBy: typeof drawer.updatedBy === 'string' ? drawer.updatedBy : null,
-    version: Math.max(1, toNumber(drawer.version, 1)),
-    syncStatus: toSyncStatus(drawer.syncStatus),
-    lastSyncedVersion: Math.max(0, toNumber(drawer.lastSyncedVersion, 0)),
-    deletedAt: drawer.deletedAt ? toDate(drawer.deletedAt, now) : null,
+    householdId: typeof pickFirstDefined(drawer, ['householdId', 'household_id']) === 'string'
+      ? String(pickFirstDefined(drawer, ['householdId', 'household_id']))
+      : null,
+    updatedAt: toDate(pickFirstDefined(drawer, ['updatedAt', 'updated_at']), createdAt),
+    updatedBy: typeof pickFirstDefined(drawer, ['updatedBy', 'updated_by']) === 'string'
+      ? String(pickFirstDefined(drawer, ['updatedBy', 'updated_by']))
+      : null,
+    version: Math.max(1, toNumber(pickFirstDefined(drawer, ['version']), 1)),
+    syncStatus: toSyncStatus(pickFirstDefined(drawer, ['syncStatus', 'sync_status'])),
+    lastSyncedVersion: Math.max(0, toNumber(pickFirstDefined(drawer, ['lastSyncedVersion', 'last_synced_version']), 0)),
+    deletedAt: pickFirstDefined(drawer, ['deletedAt', 'deleted_at']) ? toDate(pickFirstDefined(drawer, ['deletedAt', 'deleted_at']), now) : null,
   }
 }
 
 function normalizeItem(item: Record<string, unknown>, now: Date): Item {
-  const dateAdded = toDate(item.dateAdded, now)
+  const dateAdded = toDate(pickFirstDefined(item, ['dateAdded', 'date_added', 'createdAt', 'created_at']), now)
   return {
-    id: String(item.id ?? crypto.randomUUID()),
-    drawerId: String(item.drawerId ?? ''),
-    name: String(item.name ?? 'Artikel'),
-    quantity: toNumber(item.quantity, 1),
-    unit: String(item.unit ?? 'Stueck'),
-    tags: Array.isArray(item.tags) ? item.tags.map(String) : [],
-    notes: typeof item.notes === 'string' ? item.notes : '',
+    id: String(pickFirstDefined(item, ['id']) ?? crypto.randomUUID()),
+    drawerId: String(pickFirstDefined(item, ['drawerId', 'drawer_id']) ?? ''),
+    name: String(pickFirstDefined(item, ['name']) ?? 'Artikel'),
+    quantity: toNumber(pickFirstDefined(item, ['quantity']), 1),
+    unit: String(pickFirstDefined(item, ['unit']) ?? 'Stueck'),
+    tags: Array.isArray(pickFirstDefined(item, ['tags'])) ? (pickFirstDefined(item, ['tags']) as unknown[]).map(String) : [],
+    notes: typeof pickFirstDefined(item, ['notes']) === 'string' ? String(pickFirstDefined(item, ['notes'])) : '',
     dateAdded,
-    householdId: typeof item.householdId === 'string' ? item.householdId : null,
-    updatedAt: toDate(item.updatedAt, dateAdded),
-    updatedBy: typeof item.updatedBy === 'string' ? item.updatedBy : null,
-    version: Math.max(1, toNumber(item.version, 1)),
-    syncStatus: toSyncStatus(item.syncStatus),
-    lastSyncedVersion: Math.max(0, toNumber(item.lastSyncedVersion, 0)),
-    deletedAt: item.deletedAt ? toDate(item.deletedAt, now) : null,
+    householdId: typeof pickFirstDefined(item, ['householdId', 'household_id']) === 'string'
+      ? String(pickFirstDefined(item, ['householdId', 'household_id']))
+      : null,
+    updatedAt: toDate(pickFirstDefined(item, ['updatedAt', 'updated_at']), dateAdded),
+    updatedBy: typeof pickFirstDefined(item, ['updatedBy', 'updated_by']) === 'string'
+      ? String(pickFirstDefined(item, ['updatedBy', 'updated_by']))
+      : null,
+    version: Math.max(1, toNumber(pickFirstDefined(item, ['version']), 1)),
+    syncStatus: toSyncStatus(pickFirstDefined(item, ['syncStatus', 'sync_status'])),
+    lastSyncedVersion: Math.max(0, toNumber(pickFirstDefined(item, ['lastSyncedVersion', 'last_synced_version']), 0)),
+    deletedAt: pickFirstDefined(item, ['deletedAt', 'deleted_at']) ? toDate(pickFirstDefined(item, ['deletedAt', 'deleted_at']), now) : null,
   }
 }
 
 function normalizeTag(tag: Record<string, unknown>, now: Date): Tag {
-  const createdAt = toDate(tag.createdAt, now)
+  const createdAt = toDate(pickFirstDefined(tag, ['createdAt', 'created_at']), now)
   return {
-    id: String(tag.id ?? crypto.randomUUID()),
-    name: String(tag.name ?? 'Tag'),
-    color: String(tag.color ?? '#007AFF'),
+    id: String(pickFirstDefined(tag, ['id']) ?? crypto.randomUUID()),
+    name: String(pickFirstDefined(tag, ['name']) ?? 'Tag'),
+    color: String(pickFirstDefined(tag, ['color']) ?? '#007AFF'),
     createdAt,
-    householdId: typeof tag.householdId === 'string' ? tag.householdId : null,
-    updatedAt: toDate(tag.updatedAt, createdAt),
-    updatedBy: typeof tag.updatedBy === 'string' ? tag.updatedBy : null,
-    version: Math.max(1, toNumber(tag.version, 1)),
-    syncStatus: toSyncStatus(tag.syncStatus),
-    lastSyncedVersion: Math.max(0, toNumber(tag.lastSyncedVersion, 0)),
-    deletedAt: tag.deletedAt ? toDate(tag.deletedAt, now) : null,
+    householdId: typeof pickFirstDefined(tag, ['householdId', 'household_id']) === 'string'
+      ? String(pickFirstDefined(tag, ['householdId', 'household_id']))
+      : null,
+    updatedAt: toDate(pickFirstDefined(tag, ['updatedAt', 'updated_at']), createdAt),
+    updatedBy: typeof pickFirstDefined(tag, ['updatedBy', 'updated_by']) === 'string'
+      ? String(pickFirstDefined(tag, ['updatedBy', 'updated_by']))
+      : null,
+    version: Math.max(1, toNumber(pickFirstDefined(tag, ['version']), 1)),
+    syncStatus: toSyncStatus(pickFirstDefined(tag, ['syncStatus', 'sync_status'])),
+    lastSyncedVersion: Math.max(0, toNumber(pickFirstDefined(tag, ['lastSyncedVersion', 'last_synced_version']), 0)),
+    deletedAt: pickFirstDefined(tag, ['deletedAt', 'deleted_at']) ? toDate(pickFirstDefined(tag, ['deletedAt', 'deleted_at']), now) : null,
   }
 }
 
