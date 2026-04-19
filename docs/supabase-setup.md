@@ -14,6 +14,8 @@
 
 1. In Supabase den `SQL Editor` offnen.
 2. Den Inhalt aus `supabase/schema.sql` komplett ausfuhren.
+3. Falls das Projekt schon lauft und Login bisher an `public.profiles` gescheitert ist:
+   das aktualisierte Schema erneut ausfuhren, damit die neue `INSERT`-Policy auf `public.profiles` angelegt wird.
 
 Danach existieren:
 
@@ -49,6 +51,21 @@ Die `id` aus dem Ergebnis notieren.
 2. Weise jedem Nutzer ein Passwort zu oder verschicke einen Passwort-Reset.
 
 Wichtig: Die App bietet keinen Self-Signup an. Ein Nutzer muss zuerst in `auth.users` existieren.
+
+Falls bereits Nutzer in `auth.users` existieren, aber noch kein Eintrag in `public.profiles` vorhanden ist, einmalig im SQL Editor ausfuhren:
+
+```sql
+insert into public.profiles (id, email, display_name)
+select
+  u.id,
+  coalesce(u.email, ''),
+  nullif(u.raw_user_meta_data ->> 'display_name', '')
+from auth.users u
+on conflict (id) do update
+set
+  email = excluded.email,
+  display_name = coalesce(excluded.display_name, public.profiles.display_name);
+```
 
 ## 6. Zugriff auf den Haushalt freischalten
 
