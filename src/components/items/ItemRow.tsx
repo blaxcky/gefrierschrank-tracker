@@ -2,6 +2,7 @@ import { useState, useRef, useMemo, useCallback, memo } from 'react'
 import type { Item, Tag } from '../../db/database'
 import FrozenDurationBadge from '../common/FrozenDurationBadge'
 import { formatDate } from '../../utils/dates'
+import { formatQuantity } from '../../utils/units'
 
 interface ItemRowProps {
   item: Item
@@ -187,7 +188,7 @@ export default memo(function ItemRow({ item, tags, onDelete, onEdit, onRemove }:
             )}
           </div>
           <span style={{ color: '#8E8E93', fontSize: 14, whiteSpace: 'nowrap', marginLeft: 8 }}>
-            {item.quantity} {item.unit}
+            {formatQuantity(item.quantity, item.unit)}
           </span>
         </div>
       </div>

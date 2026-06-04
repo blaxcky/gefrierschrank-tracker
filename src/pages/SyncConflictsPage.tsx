@@ -4,6 +4,7 @@ import { Button, Navbar, NavbarBackLink, Page } from 'konsta/react'
 import EmptyState from '../components/common/EmptyState'
 import { resolveSyncConflict, synchronizeHousehold, useSyncConflicts } from '../hooks/useFreezerData'
 import { useSessionStore } from '../store/useSessionStore'
+import { formatQuantity } from '../utils/units'
 
 export default function SyncConflictsPage() {
   const navigate = useNavigate()
@@ -123,7 +124,7 @@ function ConflictSide({
       <div style={{ display: 'grid', gap: 6, fontSize: 13, color: '#334155' }}>
         <PayloadRow label="Name" value={String(payload.name ?? '-')} />
         {'quantity' in payload && (
-          <PayloadRow label="Menge" value={`${String(payload.quantity ?? '')} ${String(payload.unit ?? '')}`.trim()} />
+          <PayloadRow label="Menge" value={formatPayloadQuantity(payload.quantity, payload.unit)} />
         )}
         {'tags' in payload && Array.isArray(payload.tags) && (
           <PayloadRow label="Tags" value={payload.tags.length > 0 ? payload.tags.map(String).join(', ') : '-'} />
@@ -143,6 +144,17 @@ function ConflictSide({
       </div>
     </div>
   )
+}
+
+function formatPayloadQuantity(quantity: unknown, unit: unknown) {
+  const parsedQuantity = Number(quantity)
+  const unitName = String(unit ?? '')
+
+  if (!Number.isFinite(parsedQuantity)) {
+    return `${String(quantity ?? '')} ${unitName}`.trim()
+  }
+
+  return formatQuantity(parsedQuantity, unitName)
 }
 
 function PayloadRow({ label, value }: { label: string, value: string }) {

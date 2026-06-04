@@ -4,6 +4,7 @@ import { addItem, updateItem } from '../../hooks/useFreezerData'
 import type { Item } from '../../db/database'
 import TagPicker from './TagPicker'
 import { lockBodyScroll, unlockBodyScroll } from '../../utils/scrollLock'
+import { UNITS } from '../../utils/units'
 
 interface AddItemSheetProps {
   opened: boolean
@@ -12,8 +13,6 @@ interface AddItemSheetProps {
   editItem?: Item | null
   onSave?: () => void
 }
-
-const UNITS = ['Stück', 'g', 'kg', 'Packung', 'Beutel', 'Dose']
 
 export default function AddItemSheet({ opened, onClose, drawerId, editItem, onSave }: AddItemSheetProps) {
   const [name, setName] = useState('')

@@ -4,6 +4,7 @@ import type { Item } from '../../db/database'
 import { updateItem, deleteItem } from '../../hooks/useFreezerData'
 import ConfirmDialog from '../common/ConfirmDialog'
 import { lockBodyScroll, unlockBodyScroll } from '../../utils/scrollLock'
+import { formatQuantity, formatUnit } from '../../utils/units'
 
 interface RemoveQuantitySheetProps {
   opened: boolean
@@ -109,7 +110,7 @@ export default function RemoveQuantitySheet({ opened, onClose, item }: RemoveQua
               {item.name}
             </p>
             <p style={{ fontSize: 14, color: '#8E8E93', margin: 0 }}>
-              Aktuell: {maxCount} {item.unit}
+              Aktuell: {formatQuantity(maxCount, item.unit)}
             </p>
           </div>
 
@@ -150,7 +151,7 @@ export default function RemoveQuantitySheet({ opened, onClose, item }: RemoveQua
                     {removeCount}
                   </span>
                   <p style={{ fontSize: 13, color: '#8E8E93', margin: '2px 0 0' }}>
-                    {item.unit} entnehmen
+                    {formatUnit(removeCount, item.unit)} entnehmen
                   </p>
                 </div>
 
@@ -187,7 +188,7 @@ export default function RemoveQuantitySheet({ opened, onClose, item }: RemoveQua
               }}>
                 {remaining === 0
                   ? 'Alle entnommen – Artikel wird gelöscht'
-                  : `Verbleibend: ${remaining} ${item.unit}`
+                  : `Verbleibend: ${formatQuantity(remaining, item.unit)}`
                 }
               </p>
 
@@ -239,7 +240,7 @@ export default function RemoveQuantitySheet({ opened, onClose, item }: RemoveQua
                 ? 'Entnehmen & löschen'
                 : remaining === 0
                   ? 'Alle entnehmen & löschen'
-                  : `${removeCount} ${item.unit} entnehmen`
+                  : `${formatQuantity(removeCount, item.unit)} entnehmen`
             }
           </Button>
         </div>

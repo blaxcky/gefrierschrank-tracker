@@ -5,6 +5,7 @@ import { useFirstFreezer, useDrawers, useItemsByFreezer } from '../hooks/useFree
 import EmptyState from '../components/common/EmptyState'
 import FrozenDurationBadge from '../components/common/FrozenDurationBadge'
 import { formatDate, getFrozenDays } from '../utils/dates'
+import { formatQuantity } from '../utils/units'
 
 export default function FrozenDurationPage() {
   const navigate = useNavigate()
@@ -103,7 +104,7 @@ export default function FrozenDurationPage() {
                   </div>
                 </div>
                 <span style={{ fontSize: 14, color: '#8E8E93', whiteSpace: 'nowrap' }}>
-                  {item.quantity} {item.unit}
+                  {formatQuantity(item.quantity, item.unit)}
                 </span>
               </div>
             </div>
