@@ -1,4 +1,5 @@
 import type { Session } from '@supabase/supabase-js'
+import { db, type SyncEntityBase } from '../db/database'
 import { supabase } from '../lib/supabase'
 import type { AuthUser, Household, UserProfile } from '../store/useSessionStore'
 import { clearLocalData } from './syncService'
@@ -18,6 +19,8 @@ export interface SessionContext {
   profile: UserProfile
   household: Household | null
 }
+
+const LAST_SESSION_CONTEXT_KEY = 'auth:last-session-context'
 
 function getSupabaseClient() {
   if (!supabase) {
@@ -110,6 +113,140 @@ export async function resolveSessionContext(session: Session): Promise<SessionCo
       id: householdRow.id,
       name: householdRow.name,
       role: membership.role,
+    },
+  }
+}
+
+export async function cacheSessionContext(context: SessionContext) {
+  await db.appMeta.put({
+    key: LAST_SESSION_CONTEXT_KEY,
+    value: JSON.stringify(context),
+  })
+}
+
+function readSessionProfile(session: Session): UserProfile {
+  const email = session.user.email ?? ''
+  const displayName = typeof session.user.user_metadata.display_name === 'string'
+    ? session.user.user_metadata.display_name
+    : null
+
+  return {
+    id: session.user.id,
+    email,
+    displayName,
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function parseCachedSessionContext(value: string): SessionContext | null {
+  try {
+    const parsed = JSON.parse(value) as unknown
+    if (!isRecord(parsed) || !isRecord(parsed.user) || !isRecord(parsed.profile)) {
+      return null
+    }
+
+    const household = parsed.household
+    if (
+      household !== null
+      && (
+        !isRecord(household)
+        || typeof household.id !== 'string'
+        || typeof household.name !== 'string'
+        || typeof household.role !== 'string'
+      )
+    ) {
+      return null
+    }
+
+    if (
+      typeof parsed.user.id !== 'string'
+      || typeof parsed.user.email !== 'string'
+      || typeof parsed.profile.id !== 'string'
+      || typeof parsed.profile.email !== 'string'
+      || (
+        parsed.profile.displayName !== null
+        && typeof parsed.profile.displayName !== 'string'
+      )
+    ) {
+      return null
+    }
+
+    const validatedHousehold: Household | null = household === null
+      ? null
+      : {
+          id: household.id as string,
+          name: household.name as string,
+          role: household.role as string,
+        }
+
+    return {
+      user: {
+        id: parsed.user.id,
+        email: parsed.user.email,
+      },
+      profile: {
+        id: parsed.profile.id,
+        email: parsed.profile.email,
+        displayName: parsed.profile.displayName,
+      },
+      household: validatedHousehold,
+    }
+  } catch {
+    return null
+  }
+}
+
+async function resolveSingleLocalHouseholdId(): Promise<string | null> {
+  const householdIds = new Set<string>()
+  const collectHouseholdId = (entity: Pick<SyncEntityBase, 'householdId'>) => {
+    if (entity.householdId) {
+      householdIds.add(entity.householdId)
+    }
+  }
+
+  const [freezers, drawers, items, tags] = await Promise.all([
+    db.freezers.toArray(),
+    db.drawers.toArray(),
+    db.items.toArray(),
+    db.tags.toArray(),
+  ])
+
+  freezers.forEach(collectHouseholdId)
+  drawers.forEach(collectHouseholdId)
+  items.forEach(collectHouseholdId)
+  tags.forEach(collectHouseholdId)
+
+  return householdIds.size === 1 ? [...householdIds][0] : null
+}
+
+export async function resolveOfflineSessionContext(session: Session): Promise<SessionContext | null> {
+  const cachedContext = await db.appMeta.get(LAST_SESSION_CONTEXT_KEY)
+  if (cachedContext) {
+    const context = parseCachedSessionContext(cachedContext.value)
+    if (context?.user.id === session.user.id && context.household) {
+      return context
+    }
+  }
+
+  const householdId = await resolveSingleLocalHouseholdId()
+  if (!householdId) {
+    return null
+  }
+
+  const profile = readSessionProfile(session)
+  return {
+    user: {
+      id: session.user.id,
+      email: profile.email,
+    },
+    profile,
+    household: {
+      id: householdId,
+      name: 'Haushalt',
+      role: 'member',
     },
   }
 }

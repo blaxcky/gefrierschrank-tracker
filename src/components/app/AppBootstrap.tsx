@@ -2,7 +2,13 @@ import { type PropsWithChildren, useEffect } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../../lib/supabase'
 import { initializeDatabase } from '../../db/seed'
-import { getFriendlyAuthSetupError, resolveSessionContext } from '../../services/authService'
+import {
+  cacheSessionContext,
+  getFriendlyAuthSetupError,
+  resolveOfflineSessionContext,
+  resolveSessionContext,
+  type SessionContext,
+} from '../../services/authService'
 import { clearLocalData, hydrateSyncStateFromDatabase, synchronizeHousehold } from '../../services/syncService'
 import { useSessionStore } from '../../store/useSessionStore'
 import { isLocalOnlyPreferred, setLocalOnlyPreferred } from '../../utils/localMode'
@@ -46,8 +52,34 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
       try {
         setLocalOnlyPreferred(false)
         setAuthError(null)
-        const context = await resolveSessionContext(session)
+        let context: SessionContext
+        let offlineSyncError: string | null = null
+
+        try {
+          context = await resolveSessionContext(session)
+        } catch (error) {
+          const offlineContext = await resolveOfflineSessionContext(session)
+          if (!offlineContext) {
+            throw error
+          }
+
+          context = offlineContext
+          const message = error instanceof Error
+            ? error.message
+            : 'Supabase ist aktuell nicht erreichbar.'
+          offlineSyncError = `Supabase ist aktuell nicht erreichbar. Lokale Daten werden offline verwendet; neue Änderungen werden später synchronisiert. Technischer Hinweis: ${message}`
+        }
+
         if (!isActive) return
+
+        if (!offlineSyncError) {
+          try {
+            await cacheSessionContext(context)
+          } catch {
+            // A stale cache is preferable to blocking a valid online session.
+          }
+          if (!isActive) return
+        }
 
         if (!context.household) {
           await clearLocalData()
@@ -72,6 +104,14 @@ export default function AppBootstrap({ children }: PropsWithChildren) {
 
         await hydrateSyncStateFromDatabase()
         if (!isActive) return
+
+        if (offlineSyncError) {
+          setSyncState({
+            isSyncing: false,
+            syncError: offlineSyncError,
+          })
+          return
+        }
 
         try {
           await synchronizeHousehold()
